@@ -1,3 +1,5 @@
+VULKAN_SDK = os.getenv("VULKAN_SDK")
+
 project "CobraRHI"
 	kind "StaticLib"
 	language "C++"
@@ -10,21 +12,21 @@ project "CobraRHI"
 	files
 	{
 		"src/**.h",
-		"src/**.cpp",
-		"src/**.c"
+		"src/**.cpp"
 	}
 
 	includedirs
 	{
 		"include",
-		"%{IncludeDir.VulkanSDK}",
-		"%{IncludeDir.vma}",
-		"%{IncludeDir.slang}"
+		"%{VULKAN_SDK}/Include",
+		"vendor/volk",
+		"vendor/vma/include",
+		"vendor/slang/include"
 	}
 
 	links
 	{
-		"%{Library.slang}"
+		"vendor/slang/bin/slang.lib"
 	}
 
 	defines
