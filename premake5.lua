@@ -11,8 +11,11 @@ project "CobraRHI"
 
 	files
 	{
-		"src/**.h",
-		"src/**.cpp"
+		"src/Vulkan/InternalManagers/**.h",
+		"src/Vulkan/InternalManagers/**.cpp",
+		"src/Vulkan/Mappings/**.h",
+		"src/Vulkan/Mappings/**.cpp",
+		"vendor/xxHash/xxHash.c"
 	}
 
 	includedirs
@@ -21,12 +24,15 @@ project "CobraRHI"
 		"%{VULKAN_SDK}/Include",
 		"vendor/volk",
 		"vendor/vma/include",
-		"vendor/slang/include"
+		"vendor/slang/include",
+		"vendor/xxHash",
+		"vendor/imgui"
 	}
 
 	links
 	{
-		"vendor/slang/bin/slang.lib"
+		"vendor/slang/bin/slang.lib",
+		"imgui"
 	}
 
 	defines
@@ -36,6 +42,13 @@ project "CobraRHI"
 		"WIN32_LEAN_AND_MEAN",
 		"NOMINMAX"
 	}
+
+	filter "system:windows"
+		files
+		{
+			"src/Vulkan/Platform/Windows/**.h",
+			"src/Vulkan/Platform/Windows/**.cpp"
+		}
 
 	filter "configurations:Debug"
 		defines "CB_DEBUG"

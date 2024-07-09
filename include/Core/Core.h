@@ -39,6 +39,7 @@ namespace Cobra {
 		{ }
 
 		const T& operator[](uint32_t i) const noexcept { return m_Span.begin()[i]; }
+		T& operator[](uint32_t i) noexcept { return m_Span.begin()[i]; }
 
 		Span(const Span& other) : m_Span(other.m_Span) { }
 		Span& operator=(const Span& other) { m_Span = other.m_Span; }
@@ -47,7 +48,7 @@ namespace Cobra {
 		decltype(auto) end() const { return m_Span.data() + m_Span.size(); }
 
 		const T* data() const { return m_Span.data(); }
-		size_t size() const { return m_Span.size(); }
+		constexpr size_t size() const { return m_Span.size(); }
 		bool empty() const { return m_Span.empty(); }
 	private:
 		std::span<const std::reference_wrapper<T>> m_Span;
