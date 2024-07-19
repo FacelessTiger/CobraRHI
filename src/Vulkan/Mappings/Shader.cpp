@@ -2,6 +2,7 @@
 
 #include <slang.h>
 #include <slang-com-ptr.h>
+#include <spirv_cross/spirv_reflect.hpp>
 
 #include <vector>
 #include <array>
@@ -14,23 +15,23 @@ namespace Cobra {
 	static uint64_t s_IDCounter = 1;
 	static std::unordered_map<uint64_t, Impl<Shader>::ShaderData> s_ShaderList;
 
-	static void SlangStageToVulkan(SlangStage stage, VkShaderStageFlagBits* currentStage, VkShaderStageFlags* nextStages)
+	static void ExecutionModelToStage(spv::ExecutionModel model, VkShaderStageFlagBits* currentStage, VkShaderStageFlags* nextStages)
 	{
-		switch (stage)
+		switch (model)
 		{
-			case SlangStage::SLANG_STAGE_VERTEX:
+			case spv::ExecutionModelVertex:
 			{
 				*currentStage = VK_SHADER_STAGE_VERTEX_BIT;
 				*nextStages = VK_SHADER_STAGE_FRAGMENT_BIT;
 				break;
 			}
-			case SlangStage::SLANG_STAGE_FRAGMENT:
+			case spv::ExecutionModelFragment:
 			{
 				*currentStage = VK_SHADER_STAGE_FRAGMENT_BIT;
 				*nextStages = (VkShaderStageFlagBits)0;
 				break;
 			}
-			case SlangStage::SLANG_STAGE_COMPUTE:
+			case spv::ExecutionModelGLCompute:
 			{
 				*currentStage = VK_SHADER_STAGE_COMPUTE_BIT;
 				*nextStages = (VkShaderStageFlagBits)0;
@@ -54,6 +55,11 @@ namespace Cobra {
 	Shader::Shader(GraphicsContext& context, std::string_view path)
 	{
 		pimpl = std::make_unique<Impl<Shader>>(context, path);
+	}
+
+	Shader::Shader(GraphicsContext& context, std::span<const uint32_t> code)
+	{
+		pimpl = std::make_unique<Impl<Shader>>(context, code);
 	}
 
 	Shader::~Shader() { }
@@ -100,53 +106,13 @@ namespace Cobra {
 
 		size_t codeSize;
 		const void* code = compileRequest->getCompileRequestCode(&codeSize);
+		CreateStages({ (const uint32_t*)code, codeSize / sizeof(uint32_t) });
+	}
 
-		auto* reflection = (slang::ShaderReflection*)compileRequest->getReflection();
-		for (int i = 0; i < reflection->getEntryPointCount(); i++)
-		{
-			auto* entryPoint = reflection->getEntryPointByIndex(i);
-
-			VkShaderStageFlagBits currentStage;
-			VkShaderStageFlags nextStages;
-			SlangStageToVulkan(entryPoint->getStage(), &currentStage, &nextStages);
-
-			ShaderData data;
-			data.Stage = currentStage;
-			data.EntryPoint = entryPoint->getName();
-
-			if (g_ShaderObjectsSupported)
-			{
-				VkShaderCreateInfoEXT shaderInfo = {
-					.sType = VK_STRUCTURE_TYPE_SHADER_CREATE_INFO_EXT,
-					.stage = currentStage,
-					.nextStage = nextStages,
-					.codeType = VK_SHADER_CODE_TYPE_SPIRV_EXT,
-					.codeSize = codeSize,
-					.pCode = code,
-					.pName = data.EntryPoint.c_str(),
-					.setLayoutCount = 1,
-					.pSetLayouts = &Context->BindlessSetLayout,
-					.pushConstantRangeCount = 1,
-					.pPushConstantRanges = PUSH_CONSTANT_RANGES.data()
-				};
-				VkCheck(Context->Config, vkCreateShadersEXT(Context->Device, 1, &shaderInfo, nullptr, &data.Shader));
-			}
-			else
-			{
-				VkShaderModuleCreateInfo shaderInfo = {
-					.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-					.codeSize = codeSize,
-					.pCode = (const uint32_t*)code
-				};
-				VkCheck(Context->Config, vkCreateShaderModule(Context->Device, &shaderInfo, nullptr, &data.Module));
-
-				uint64_t id = s_IDCounter++;
-				data.ID = id;
-				s_ShaderList[id] = data;
-			}
-
-			ShaderStages.emplace_back(data);
-		}
+	Impl<Shader>::Impl(GraphicsContext& context, std::span<const uint32_t> code)
+		: Context(context.pimpl)
+	{
+		CreateStages(code);
 	}
 
 	Impl<Shader>::~Impl()
@@ -163,6 +129,56 @@ namespace Cobra {
 				Context->DeletionQueues->Push(pendingValue, s_ShaderList[shader.ID].Module);
 				s_ShaderList.erase(shader.ID);
 			}
+		}
+	}
+
+	void Impl<Shader>::CreateStages(std::span<const uint32_t> code)
+	{
+		spirv_cross::Compiler comp(code.data(), code.size());
+		auto entryPoints = comp.get_entry_points_and_stages();
+
+		for (auto& entryPoint : entryPoints)
+		{
+			VkShaderStageFlagBits currentStage;
+			VkShaderStageFlags nextStages;
+			ExecutionModelToStage(entryPoint.execution_model, &currentStage, &nextStages);
+
+			ShaderData data;
+			data.Stage = currentStage;
+			data.EntryPoint = entryPoint.name;
+
+			if (g_ShaderObjectsSupported)
+			{
+				VkShaderCreateInfoEXT shaderInfo = {
+					.sType = VK_STRUCTURE_TYPE_SHADER_CREATE_INFO_EXT,
+					.stage = currentStage,
+					.nextStage = nextStages,
+					.codeType = VK_SHADER_CODE_TYPE_SPIRV_EXT,
+					.codeSize = code.size_bytes(),
+					.pCode = code.data(),
+					.pName = data.EntryPoint.c_str(),
+					.setLayoutCount = 1,
+					.pSetLayouts = &Context->BindlessSetLayout,
+					.pushConstantRangeCount = 1,
+					.pPushConstantRanges = PUSH_CONSTANT_RANGES.data()
+				};
+				VkCheck(Context->Config, vkCreateShadersEXT(Context->Device, 1, &shaderInfo, nullptr, &data.Shader));
+			}
+			else
+			{
+				VkShaderModuleCreateInfo shaderInfo = {
+					.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+					.codeSize = code.size_bytes(),
+					.pCode = code.data()
+				};
+				VkCheck(Context->Config, vkCreateShaderModule(Context->Device, &shaderInfo, nullptr, &data.Module));
+
+				uint64_t id = s_IDCounter++;
+				data.ID = id;
+				s_ShaderList[id] = data;
+			}
+
+			ShaderStages.emplace_back(data);
 		}
 	}
 

@@ -17,9 +17,9 @@ namespace Cobra {
 		vkCmdClearColorImage(
 			pimpl->CommandBuffer, image.pimpl->Allocation.Image, VK_IMAGE_LAYOUT_GENERAL,
 			PtrTo(std::visit(overloaded{
-				[&](const Vec4& value)  { return VkClearColorValue { .float32 = { value.r, value.b, value.g, value.a } }; },
-				[&](const iVec4& value) { return VkClearColorValue { .int32 = { value.r, value.b, value.g, value.a } }; },
-				[&](const uVec4& value) { return VkClearColorValue { .uint32 = { value.r, value.b, value.g, value.a } }; }
+				[&](const Vec4& value)  { return VkClearColorValue { .float32 = { value.r, value.g, value.b, value.a } }; },
+				[&](const iVec4& value) { return VkClearColorValue { .int32 = { value.r, value.g, value.b, value.a } }; },
+				[&](const uVec4& value) { return VkClearColorValue { .uint32 = { value.r, value.g, value.b, value.a } }; }
 			}, color)), 
 			1, PtrTo(Utils::ImageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT))
 		);
@@ -33,9 +33,9 @@ namespace Cobra {
 				.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
 				.colorAttachment = attachment,
 				.clearValue = std::visit(overloaded {
-					[&](const Vec4& value)  { return VkClearColorValue { .float32 = { value.r, value.b, value.g, value.a } }; },
-					[&](const iVec4& value) { return VkClearColorValue { .int32 = { value.r, value.b, value.g, value.a } }; },
-					[&](const uVec4& value) { return VkClearColorValue { .uint32 = { value.r, value.b, value.g, value.a } }; }
+					[&](const Vec4& value) { return VkClearColorValue {.float32 = { value.r, value.g, value.b, value.a } }; },
+					[&](const iVec4& value) { return VkClearColorValue {.int32 = { value.r, value.g, value.b, value.a } }; },
+					[&](const uVec4& value) { return VkClearColorValue {.uint32 = { value.r, value.g, value.b, value.a } }; }
 				}, color)
 			}),
 			1, PtrTo(VkClearRect {

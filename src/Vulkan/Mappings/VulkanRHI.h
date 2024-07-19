@@ -164,7 +164,10 @@ namespace Cobra {
 		std::shared_ptr<Impl<GraphicsContext>> Context;
 
 		Impl(GraphicsContext& context, std::string_view path);
+		Impl(GraphicsContext& context, std::span<const uint32_t> code);
 		~Impl();
+
+		void CreateStages(std::span<const uint32_t> code);
 
 		static ShaderData& GetShaderByID(uint64_t id);
 	};

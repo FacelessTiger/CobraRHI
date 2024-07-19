@@ -3,9 +3,6 @@
 #define VMA_IMPLEMENTATION
 #include <vk_mem_alloc.h>
 
-#define VOLK_IMPLEMENTATION
-#include <vk_mem_alloc.h>
-
 #include "VulkanRHI.h"
 
 #include <iostream>
@@ -182,7 +179,7 @@ namespace Cobra {
 		}
 
 		auto featuresEnable = std::to_array<VkValidationFeatureEnableEXT>({
-			VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT
+			VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT, VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT
 		});
 		
 		VkCheck(Config, vkCreateInstance(PtrTo(VkInstanceCreateInfo {
