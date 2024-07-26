@@ -81,7 +81,7 @@ namespace Cobra {
 			.requiredFlags = (flags & BufferFlags::DeviceLocal) ? VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT : (VkMemoryPropertyFlags)0
 		};
 
-		vmaCreateBuffer(Context->Allocator, &bufferInfo, &vmaAllocInfo, &Allocation.Buffer, &Allocation.Allocation, &Allocation.Info);
+		VkCheck(context.pimpl->Config, vmaCreateBuffer(Context->Allocator, &bufferInfo, &vmaAllocInfo, &Allocation.Buffer, &Allocation.Allocation, &Allocation.Info));
 
 		VkBufferDeviceAddressInfo addressInfo = {
 			.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,

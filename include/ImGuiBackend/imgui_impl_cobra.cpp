@@ -305,16 +305,11 @@ bool ImGui_ImplCobra_CreateFontsTexture()
 	unsigned char* pixels;
 	int width, height;
 	io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
-	size_t uploadSize = width * height * 4 * sizeof(char);
 
 	bd->FontImage = std::make_unique<Cobra::Image>(*v->Context, Cobra::uVec2 { (uint32_t)width, (uint32_t)height }, Cobra::ImageFormat::R8G8B8A8_UNORM, Cobra::ImageUsage::Sampled | Cobra::ImageUsage::TransferDst);
-	Cobra::Buffer uploadBuffer(*v->Context, uploadSize, Cobra::BufferUsage::TransferSrc, Cobra::BufferFlags::Mapped);
-	memcpy(uploadBuffer.GetHostAddress(), pixels, uploadSize);
-
-	auto cmd = v->Queue->Begin();
-	cmd.CopyToImage(uploadBuffer, *bd->FontImage);
-	v->Queue->Submit(cmd, {});
-	v->Queue->WaitIdle();
+	bd->FontImage->SetDebugName("Imgui font image");
+	bd->FontImage->Set(pixels);
+	bd->FontImage->Transition(Cobra::ImageLayout::ReadOnlyOptimal);
 	
 	io.Fonts->SetTexID((ImTextureID)(uint64_t)bd->FontImage->GetHandle());
 	return true;

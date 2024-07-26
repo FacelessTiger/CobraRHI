@@ -166,14 +166,14 @@ namespace Cobra {
 			.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO
 		})));
 
-		vkCmdBindDescriptorSets(cmd.pimpl->CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pimpl->Context->BindlessPipelineLayout, 0, 1, &pimpl->Context->BindlessSet, 0, nullptr);
-		vkCmdBindDescriptorSets(cmd.pimpl->CommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, pimpl->Context->BindlessPipelineLayout, 0, 1, &pimpl->Context->BindlessSet, 0, nullptr);
+		if (pimpl->Flags & VK_QUEUE_GRAPHICS_BIT) vkCmdBindDescriptorSets(cmd.pimpl->CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pimpl->Context->BindlessPipelineLayout, 0, 1, &pimpl->Context->BindlessSet, 0, nullptr);
+		if (pimpl->Flags & VK_QUEUE_COMPUTE_BIT) vkCmdBindDescriptorSets(cmd.pimpl->CommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, pimpl->Context->BindlessPipelineLayout, 0, 1, &pimpl->Context->BindlessSet, 0, nullptr);
 
 		return cmd;
 	}
 
-	Impl<Queue>::Impl(Impl<GraphicsContext>* context, VkQueue queue, uint32_t queueFamily)
-		: Context(context), Queue(queue), QueueFamily(queueFamily)
+	Impl<Queue>::Impl(Impl<GraphicsContext>* context, VkQueue queue, uint32_t queueFamily, VkQueueFlags flags)
+		: Context(context), Queue(queue), QueueFamily(queueFamily), Flags(flags)
 	{
 		Fence.pimpl = std::make_unique<Impl<Cobra::Fence>>(context);
 	}

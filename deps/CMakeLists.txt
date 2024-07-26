@@ -1,5 +1,5 @@
 target_include_directories(CobraRHI PRIVATE slang/include xxHash)
-target_link_libraries(CobraRHI PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/slang/bin/slang.lib")
+target_link_libraries(CobraRHI PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/slang/lib/slang.lib")
 target_sources(CobraRHI PRIVATE xxHash/xxhash.c)
 
 if (WIN32)

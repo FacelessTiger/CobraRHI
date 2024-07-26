@@ -29,22 +29,19 @@ namespace Cobra {
 	GraphicsContext::GraphicsContext(const ContextConfig& config)
 	{
 		pimpl = std::make_shared<Impl<GraphicsContext>>(config);
+		pimpl->TransferManager = new TransferManager(*this);
 	}
 
 	GraphicsContext::~GraphicsContext() { }
 	GraphicsContext::GraphicsContext(GraphicsContext&& other) noexcept { pimpl = std::move(other.pimpl); other.pimpl = nullptr; }
 	GraphicsContext& GraphicsContext::operator=(GraphicsContext&& other) noexcept { pimpl = std::move(other.pimpl); other.pimpl = nullptr; return *this; }
 
-	void GraphicsContext::SetFrameInFlight()
-	{
-		pimpl->DeletionQueues->Flush(0);
-	}
-
 	Queue& GraphicsContext::GetQueue(QueueType type)
 	{
 		switch (type)
 		{
 			case QueueType::Graphics: return pimpl->GraphicsQueue;
+			case QueueType::Transfer: return pimpl->TransferQueue;
 			default: std::unreachable();
 		}
 	}
@@ -133,6 +130,7 @@ namespace Cobra {
 
 	Impl<GraphicsContext>::~Impl()
 	{
+		delete TransferManager;
 		vkDeviceWaitIdle(Device);
 
 		// Write pipeline cache to disk
@@ -154,6 +152,7 @@ namespace Cobra {
 
 		DeletionQueues->Flush(GraphicsQueue.pimpl->Fence.GetCurrentValue());
 		GraphicsQueue.pimpl->Destroy();
+		TransferQueue.pimpl->Destroy();
 
 		vkDestroyDescriptorSetLayout(Device, BindlessSetLayout, nullptr);
 		vkDestroyPipelineLayout(Device, BindlessPipelineLayout, nullptr);
@@ -239,6 +238,8 @@ namespace Cobra {
 		{
 			if (!std::strcmp(property.extensionName, VK_EXT_SHADER_OBJECT_EXTENSION_NAME)) g_ShaderObjectsSupported = true;
 			else if (!std::strcmp(property.extensionName, VK_EXT_GRAPHICS_PIPELINE_LIBRARY_EXTENSION_NAME)) g_GPLSupported = true;
+
+			if (!std::strcmp(property.extensionName, VK_EXT_HOST_IMAGE_COPY_EXTENSION_NAME)) g_HostImageSupported = true;
 		}
 	}
 
@@ -249,23 +250,33 @@ namespace Cobra {
 		std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
 		vkGetPhysicalDeviceQueueFamilyProperties(ChosenGPU, &queueFamilyCount, queueFamilies.data());
 
+		// TODO: select queues in a better way
 		uint32_t graphicsQueueFamily;
+		uint32_t transferQueueFamily;
+
 		for (uint32_t i = 0; i < queueFamilyCount; i++)
 		{
 			const auto& queueFamily = queueFamilies[i];
 			if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
-			{
 				graphicsQueueFamily = i;
-				break;
-			}
+			else if (queueFamily.queueFlags & VK_QUEUE_TRANSFER_BIT)
+				transferQueueFamily = i;
 		}
 
 		float queuePriority = 1.0f;
-		VkDeviceQueueCreateInfo queueInfo = {
-			.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-			.queueFamilyIndex = graphicsQueueFamily,
-			.queueCount = 1,
-			.pQueuePriorities = &queuePriority
+		std::vector<VkDeviceQueueCreateInfo> queueInfos = {
+			{
+				.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+				.queueFamilyIndex = graphicsQueueFamily,
+				.queueCount = 1,
+				.pQueuePriorities = &queuePriority
+			},
+			{
+				.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+				.queueFamilyIndex = transferQueueFamily,
+				.queueCount = 1,
+				.pQueuePriorities = &queuePriority
+			}
 		};
 
 		Utils::FeatureBuilder builder;
@@ -319,20 +330,32 @@ namespace Cobra {
 			});
 		}
 
+		if (g_HostImageSupported)
+		{
+			builder.AddExtension(VK_EXT_HOST_IMAGE_COPY_EXTENSION_NAME);
+			builder.AddFeature<VkPhysicalDeviceHostImageCopyFeaturesEXT>(VkPhysicalDeviceHostImageCopyFeaturesEXT {
+				.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_IMAGE_COPY_FEATURES_EXT,
+				.hostImageCopy = true
+			});
+		}
+
 		VkCheck(Config, vkCreateDevice(ChosenGPU, PtrTo(VkDeviceCreateInfo {
 			.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
 			.pNext = builder.GetChain(),
-			.queueCreateInfoCount = 1,
-			.pQueueCreateInfos = &queueInfo,
+			.queueCreateInfoCount = (uint32_t)queueInfos.size(),
+			.pQueueCreateInfos = queueInfos.data(),
 			.enabledExtensionCount = (uint32_t)builder.extensions.size(),
 			.ppEnabledExtensionNames = builder.extensions.data()
 		}), nullptr, &Device));
 		volkLoadDevice(Device);
 
 		VkQueue graphicsQueue;
+		VkQueue transferQueue;
 		vkGetDeviceQueue(Device, graphicsQueueFamily, 0, &graphicsQueue);
+		vkGetDeviceQueue(Device, transferQueueFamily, 0, &transferQueue);
 
-		GraphicsQueue.pimpl = std::make_unique<Impl<Queue>>(this, graphicsQueue, graphicsQueueFamily);
+		GraphicsQueue.pimpl = std::make_unique<Impl<Queue>>(this, graphicsQueue, graphicsQueueFamily, VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT);
+		TransferQueue.pimpl = std::make_unique<Impl<Queue>>(this, transferQueue, transferQueueFamily, VK_QUEUE_TRANSFER_BIT);
 	}
 
 	void Impl<GraphicsContext>::SetupBindless()

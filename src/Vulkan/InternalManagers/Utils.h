@@ -43,6 +43,7 @@ namespace Cobra::Utils {
 	VkCompareOp CBCompareOpToVulkan(CompareOperation op);
 	VkFormat CBImageFormatToVulkan(ImageFormat format);
 	VkImageUsageFlags CBImageUsageToVulkan(ImageUsage usage);
+	VkImageLayout  CBImageLayoutToVulkan(ImageLayout layout);
 	VkPipelineStageFlags2 CBPipelineStageToVulkan(PipelineStage stage);
 	VkFilter CBFilterToVulkan(Filter filter);
 	VkBlendFactor CBBlendFactorToVulkan(BlendFactor blend);

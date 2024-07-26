@@ -1,4 +1,5 @@
 #include "VulkanRHI.h"
+#include <vulkan/utility/vk_format_utils.h>
 
 namespace Cobra {
 
@@ -15,6 +16,86 @@ namespace Cobra {
 	Image::~Image() { }
 	Image::Image(Image&& other) noexcept { pimpl = std::move(other.pimpl); other.pimpl = nullptr; }
 	Image& Image::operator=(Image&& other) noexcept { pimpl = std::move(other.pimpl); other.pimpl = nullptr; return *this; }
+
+	void Image::SetDebugName(std::string_view name)
+	{
+		if (pimpl->Context->Config.Debug)
+		{
+			VkCheck(pimpl->Context->Config, vkSetDebugUtilsObjectNameEXT(pimpl->Context->Device, PtrTo(VkDebugUtilsObjectNameInfoEXT{
+				.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT,
+				.objectType = VK_OBJECT_TYPE_IMAGE,
+				.objectHandle = (uint64_t)pimpl->Allocation.Image,
+				.pObjectName = name.data()
+			})));
+		}
+	}
+
+	void Image::Set(const void* data) const
+	{
+		if (g_HostImageSupported)
+		{
+			vkTransitionImageLayoutEXT(pimpl->Context->Device, 1, PtrTo(VkHostImageLayoutTransitionInfoEXT {
+				.sType = VK_STRUCTURE_TYPE_HOST_IMAGE_LAYOUT_TRANSITION_INFO_EXT,
+				.image = pimpl->Allocation.Image,
+				.oldLayout = pimpl->Layout,
+				.newLayout = VK_IMAGE_LAYOUT_GENERAL,
+				.subresourceRange = Utils::ImageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT)
+			}));
+
+			vkCopyMemoryToImageEXT(pimpl->Context->Device, PtrTo(VkCopyMemoryToImageInfoEXT {
+				.sType = VK_STRUCTURE_TYPE_COPY_MEMORY_TO_IMAGE_INFO_EXT,
+				.dstImage = pimpl->Allocation.Image,
+				.dstImageLayout = VK_IMAGE_LAYOUT_GENERAL,
+				.regionCount = 1,
+				.pRegions = PtrTo(VkMemoryToImageCopyEXT {
+					.sType = VK_STRUCTURE_TYPE_MEMORY_TO_IMAGE_COPY_EXT,
+					.pHostPointer = data,
+					.imageSubresource = {
+						.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+						.mipLevel = 0,
+						.baseArrayLayer = 0,
+						.layerCount = 1
+					},
+					.imageOffset = { 0, 0, 0 },
+					.imageExtent = { pimpl->Size.x, pimpl->Size.y, 1 }
+				})
+			}));
+
+			pimpl->Layout = VK_IMAGE_LAYOUT_GENERAL;
+			pimpl->Stage = VK_PIPELINE_STAGE_2_HOST_BIT;
+		}
+		else
+		{
+			pimpl->Context->TransferManager->Transfer(*this, { (std::byte*)data, pimpl->Size.x * pimpl->Size.y * (uint32_t)vkuFormatTexelSize(Utils::CBImageFormatToVulkan(pimpl->Format)) });
+		}
+	}
+
+	void Image::Transition(ImageLayout layout) const
+	{
+		VkImageLayout vulkanLayout = Utils::CBImageLayoutToVulkan(layout);
+
+		if (g_HostImageSupported)
+		{
+			vkTransitionImageLayoutEXT(pimpl->Context->Device, 1, PtrTo(VkHostImageLayoutTransitionInfoEXT {
+				.sType = VK_STRUCTURE_TYPE_HOST_IMAGE_LAYOUT_TRANSITION_INFO_EXT,
+				.image = pimpl->Allocation.Image,
+				.oldLayout = pimpl->Layout,
+				.newLayout = vulkanLayout,
+				.subresourceRange = Utils::ImageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT)
+			}));
+
+			pimpl->Layout = vulkanLayout;
+			pimpl->Stage = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+		}
+		else
+		{
+			auto& queue = pimpl->Context->TransferManager->GetQueue();
+
+			auto cmd = queue.Begin();
+			pimpl->TransitionLayout(cmd.pimpl->CommandBuffer, vulkanLayout, VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT);
+			queue.Submit(cmd, {}).Wait();
+		}
+	}
 
 	uint32_t Image::GetHandle() const { return pimpl->Handle.GetPendingValue(); }
 
@@ -42,7 +123,8 @@ namespace Cobra {
 				.usage = Utils::CBImageUsageToVulkan(Usage)
 			}), 
 			PtrTo(VmaAllocationCreateInfo {
-				.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE
+				.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
+				.requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
 			}),
 			&Allocation.Image, &Allocation.Allocation, nullptr
 		);

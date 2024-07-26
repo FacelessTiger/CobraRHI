@@ -28,6 +28,12 @@ namespace Cobra {
 		Sampled = 32
 	};
 
+	enum class ImageLayout : uint32_t
+	{
+		General,
+		ReadOnlyOptimal
+	};
+
 	inline ImageUsage operator|(ImageUsage a, ImageUsage b) { return (ImageUsage)((int)a | (int)b); };
 	inline ImageUsage& operator|=(ImageUsage& a, ImageUsage b) { return a = a | b; };
 	inline bool operator&(ImageUsage a, ImageUsage b) { return (int)a & (int)b; };
@@ -45,6 +51,11 @@ namespace Cobra {
 
 		Image(Image&& other) noexcept;
 		Image& operator=(Image&& other) noexcept;
+
+		void SetDebugName(std::string_view name);
+
+		void Set(const void* data) const;
+		void Transition(ImageLayout layout) const;
 
 		uint32_t GetHandle() const;
 	private:

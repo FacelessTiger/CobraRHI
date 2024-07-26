@@ -1,4 +1,5 @@
 #include "Utils.h"
+#include "../Mappings/VulkanRHI.h"
 
 #include <assert.h>
 
@@ -44,6 +45,7 @@ namespace Cobra::Utils {
 	VkImageUsageFlags CBImageUsageToVulkan(ImageUsage usage)
 	{
 		VkImageUsageFlags ret = 0;
+		if (g_HostImageSupported) ret |= VK_IMAGE_USAGE_HOST_TRANSFER_BIT_EXT;
 
 		if (usage & ImageUsage::ColorAttachment)		ret |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 		if (usage & ImageUsage::DepthStencilAttachment)	ret |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
@@ -53,6 +55,16 @@ namespace Cobra::Utils {
 		if (usage & ImageUsage::Sampled)				ret |= VK_IMAGE_USAGE_SAMPLED_BIT;
 
 		return ret;
+	}
+
+	VkImageLayout CBImageLayoutToVulkan(ImageLayout layout)
+	{
+		switch (layout)
+		{
+			case ImageLayout::General:			return VK_IMAGE_LAYOUT_GENERAL;
+			case ImageLayout::ReadOnlyOptimal:	return VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL;
+			default:							std::unreachable();
+		}
 	}
 
 	VkPipelineStageFlags2 CBPipelineStageToVulkan(PipelineStage stage)

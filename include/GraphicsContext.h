@@ -19,7 +19,8 @@ namespace Cobra {
 
 	enum class QueueType
 	{
-		Graphics
+		Graphics,
+		Transfer
 	};
 
 	struct ContextConfig
@@ -46,7 +47,6 @@ namespace Cobra {
 		GraphicsContext(GraphicsContext&& other) noexcept;
 		GraphicsContext& operator=(GraphicsContext&& other) noexcept;
 
-		void SetFrameInFlight();
 		Queue& GetQueue(QueueType type);
 	};
 

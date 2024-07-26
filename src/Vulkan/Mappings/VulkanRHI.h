@@ -5,6 +5,7 @@
 #include "../InternalManagers/PipelineKeys.h"
 #include "../InternalManagers/VulkanPipelines.h"
 #include "../InternalManagers/ResourceHandle.h"
+#include "../InternalManagers/TransferManager.h"
 #include "../InternalManagers/Utils.h"
 
 #define VMA_STATIC_VULKAN_FUNCTIONS 0
@@ -28,6 +29,7 @@ namespace Cobra {
 
 	inline bool g_ShaderObjectsSupported = false;
 	inline bool g_GPLSupported = false;
+	inline bool g_HostImageSupported = false;
 
 	inline constexpr auto PUSH_CONSTANT_RANGES = std::to_array<VkPushConstantRange>({
 		{ VK_SHADER_STAGE_ALL, 0, 128 }
@@ -43,8 +45,8 @@ namespace Cobra {
 		VkDevice Device;
 		VmaAllocator Allocator;
 
-		Queue GraphicsQueue;
-
+		Queue GraphicsQueue, TransferQueue;
+		TransferManager* TransferManager;
 		std::unique_ptr<DeletionQueue> DeletionQueues;
 
 		VkDescriptorPool BindlessPool;
@@ -73,6 +75,7 @@ namespace Cobra {
 	{
 		VkQueue Queue;
 		uint32_t QueueFamily;
+		VkQueueFlags Flags;
 
 		Fence Fence;
 
@@ -93,7 +96,7 @@ namespace Cobra {
 		std::vector<CommandAllocator*> Allocators;
 		std::deque<SubmittedCommandList> PendingCommandLists;
 
-		Impl(Impl<GraphicsContext>* context, VkQueue queue, uint32_t queueFamily);
+		Impl(Impl<GraphicsContext>* context, VkQueue queue, uint32_t queueFamily, VkQueueFlags flags);
 
 		CommandAllocator* AcquireCommandAllocator();
 		void Destroy();
