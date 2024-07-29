@@ -34,13 +34,16 @@ namespace Cobra {
 	{
 		if (g_HostImageSupported)
 		{
-			vkTransitionImageLayoutEXT(pimpl->Context->Device, 1, PtrTo(VkHostImageLayoutTransitionInfoEXT {
-				.sType = VK_STRUCTURE_TYPE_HOST_IMAGE_LAYOUT_TRANSITION_INFO_EXT,
-				.image = pimpl->Allocation.Image,
-				.oldLayout = pimpl->Layout,
-				.newLayout = VK_IMAGE_LAYOUT_GENERAL,
-				.subresourceRange = Utils::ImageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT)
-			}));
+			if (pimpl->Layout != VK_IMAGE_LAYOUT_GENERAL)
+			{
+				vkTransitionImageLayoutEXT(pimpl->Context->Device, 1, PtrTo(VkHostImageLayoutTransitionInfoEXT{
+					.sType = VK_STRUCTURE_TYPE_HOST_IMAGE_LAYOUT_TRANSITION_INFO_EXT,
+					.image = pimpl->Allocation.Image,
+					.oldLayout = pimpl->Layout,
+					.newLayout = VK_IMAGE_LAYOUT_GENERAL,
+					.subresourceRange = Utils::ImageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT)
+				}));
+			}
 
 			vkCopyMemoryToImageEXT(pimpl->Context->Device, PtrTo(VkCopyMemoryToImageInfoEXT {
 				.sType = VK_STRUCTURE_TYPE_COPY_MEMORY_TO_IMAGE_INFO_EXT,
@@ -73,6 +76,7 @@ namespace Cobra {
 	void Image::Transition(ImageLayout layout) const
 	{
 		VkImageLayout vulkanLayout = Utils::CBImageLayoutToVulkan(layout);
+		if (vulkanLayout == pimpl->Layout) return;
 
 		if (g_HostImageSupported)
 		{

@@ -78,6 +78,7 @@ namespace Cobra {
 
 		const int translationUnitIndex = compileRequest->addTranslationUnit(SlangSourceLanguage::SLANG_SOURCE_LANGUAGE_SLANG, nullptr);
 		compileRequest->addTranslationUnitSourceFile(translationUnitIndex, path.data());
+		compileRequest->addSearchPath(COBRARHI_INCLUDE_DIR);
 		compileRequest->setMatrixLayoutMode(SLANG_MATRIX_LAYOUT_COLUMN_MAJOR);
 		compileRequest->setTargetFlags(0, SLANG_TARGET_FLAG_GENERATE_SPIRV_DIRECTLY | SLANG_TARGET_FLAG_GENERATE_WHOLE_PROGRAM);
 		compileRequest->setTargetForceGLSLScalarBufferLayout(0, true);

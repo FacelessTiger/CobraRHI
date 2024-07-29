@@ -9,3 +9,4 @@ add_subdirectory(src)
 add_subdirectory(deps)
 
 target_include_directories(CobraRHI PUBLIC include)
+target_compile_definitions(CobraRHI PRIVATE COBRARHI_INCLUDE_DIR="${CMAKE_CURRENT_LIST_DIR}/include")
