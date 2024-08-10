@@ -4,6 +4,8 @@ namespace Cobra {
 
 	template<class... Ts>
 	struct overloaded : Ts... { using Ts::operator()...; };
+	template <typename... Ts>
+	overloaded(Ts&&...) -> overloaded<std::decay_t<Ts>...>;
 
 	CommandList::CommandList() { }
 	CommandList::~CommandList() { }

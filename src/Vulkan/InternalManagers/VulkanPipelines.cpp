@@ -109,9 +109,12 @@ namespace Cobra {
 		}), nullptr, &pipeline);
 		context->GraphicsPipelines[key] = pipeline;
 
+		// TODO: For some reason std::format isn't working on android despite specificing c++20, will investiage in the future
+#ifndef __ANDROID__
 		std::chrono::duration<float> duration = std::chrono::steady_clock::now() - start;
 		if (context->Config.Trace)
 			context->Config.Callback(std::format("Compiled graphics pipeline in {} microseconds", std::chrono::duration_cast<std::chrono::microseconds>(duration).count()).c_str(), MessageSeverity::Trace);
+#endif
 
 		return pipeline;
     }

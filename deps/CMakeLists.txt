@@ -1,5 +1,4 @@
 target_include_directories(CobraRHI PRIVATE slang/include xxHash)
-target_link_libraries(CobraRHI PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/slang/lib/slang.lib")
 target_sources(CobraRHI PRIVATE xxHash/xxhash.c)
 
 if (WIN32)
@@ -8,19 +7,23 @@ endif()
 
 if (BACKEND STREQUAL "VK")
     if (WIN32)
-        set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_WIN32_KHR)  
+        target_compile_definitions(CobraRHI PRIVATE VK_USE_PLATFORM_WIN32_KHR)
+        target_link_libraries(CobraRHI PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/slang/lib/windows/slang.lib")
+    elseif (ANDROID)
+        target_compile_definitions(CobraRHI PRIVATE VK_USE_PLATFORM_ANDROID_KHR)
+        #target_link_libraries(CobraRHI PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/slang/lib/aarch64/libslang.so")
     endif()
 
+    set(VOLK_PULL_IN_VULKAN OFF)
     add_subdirectory(volk)
     add_subdirectory(vma)
-    add_subdirectory(spirv-cross)
+    add_subdirectory(vulkan-headers)
 
     target_compile_definitions(CobraRHI PRIVATE VK_NO_PROTOTYPES)
 
-    include(FindVulkan)
     target_link_libraries(CobraRHI PRIVATE
-        volk
+        volk_headers
         GPUOpen::VulkanMemoryAllocator
-        spirv-cross-c
+        Vulkan::Headers
     )
 endif()

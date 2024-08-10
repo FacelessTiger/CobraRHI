@@ -15,6 +15,10 @@ function(glob_sources var dir)
         list(FILTER files EXCLUDE REGEX "(^|/)Unix/.*")
     endif()
 
+    if(NOT ANDROID)
+        list(FILTER files EXCLUDE REGEX "(^|/)Android/.*")
+    endif()
+
     list(APPEND ${var} ${files})
     set(${var} ${${var}} PARENT_SCOPE)
 endfunction()

@@ -2,11 +2,11 @@
 
 #include <slang.h>
 #include <slang-com-ptr.h>
-#include <spirv_cross/spirv_reflect.hpp>
 
 #include <vector>
 #include <array>
 #include <iostream>
+#include <algorithm>
 
 namespace Cobra {
 
@@ -15,23 +15,34 @@ namespace Cobra {
 	static uint64_t s_IDCounter = 1;
 	static std::unordered_map<uint64_t, Impl<Shader>::ShaderData> s_ShaderList;
 
-	static void ExecutionModelToStage(spv::ExecutionModel model, VkShaderStageFlagBits* currentStage, VkShaderStageFlags* nextStages)
+	static Impl<Shader>::ShaderStage SlangStageToCB(SlangStage stage)
 	{
-		switch (model)
+		switch (stage)
 		{
-			case spv::ExecutionModelVertex:
+			case SlangStage::SLANG_STAGE_VERTEX:    return Impl<Shader>::ShaderStage::Vertex;
+			case SlangStage::SLANG_STAGE_FRAGMENT:  return Impl<Shader>::ShaderStage::Fragment;
+			case SlangStage::SLANG_STAGE_COMPUTE:   return Impl<Shader>::ShaderStage::Compute;
+			default:                                std::unreachable();
+		}
+	}
+
+	static void CBStageToVulkan(Impl<Shader>::ShaderStage stage, VkShaderStageFlagBits* currentStage, VkShaderStageFlags* nextStages)
+	{
+		switch (stage)
+		{
+			case Impl<Shader>::ShaderStage::Vertex:
 			{
 				*currentStage = VK_SHADER_STAGE_VERTEX_BIT;
 				*nextStages = VK_SHADER_STAGE_FRAGMENT_BIT;
 				break;
 			}
-			case spv::ExecutionModelFragment:
+			case Impl<Shader>::ShaderStage::Fragment:
 			{
 				*currentStage = VK_SHADER_STAGE_FRAGMENT_BIT;
 				*nextStages = (VkShaderStageFlagBits)0;
 				break;
 			}
-			case spv::ExecutionModelGLCompute:
+			case Impl<Shader>::ShaderStage::Compute:
 			{
 				*currentStage = VK_SHADER_STAGE_COMPUTE_BIT;
 				*nextStages = (VkShaderStageFlagBits)0;
@@ -52,9 +63,9 @@ namespace Cobra {
 		shader->Context->Config.Callback(message, severity);
 	}
 
-	Shader::Shader(GraphicsContext& context, std::string_view path)
+	Shader::Shader(GraphicsContext& context, std::string_view path, std::vector<uint32_t>* outputCode)
 	{
-		pimpl = std::make_unique<Impl<Shader>>(context, path);
+		pimpl = std::make_unique<Impl<Shader>>(context, path, outputCode);
 	}
 
 	Shader::Shader(GraphicsContext& context, std::span<const uint32_t> code)
@@ -66,9 +77,10 @@ namespace Cobra {
 	Shader::Shader(Shader&& other) noexcept { pimpl = std::move(other.pimpl); other.pimpl = nullptr; }
 	Shader& Shader::operator=(Shader&& other) noexcept { pimpl = std::move(other.pimpl); other.pimpl = nullptr; return *this; }
 
-	Impl<Shader>::Impl(GraphicsContext& context, std::string_view path)
+	Impl<Shader>::Impl(GraphicsContext& context, std::string_view path, std::vector<uint32_t>* outputCode)
 		: Context(context.pimpl)
 	{
+#ifndef __ANDROID__
 		ComPtr<slang::IGlobalSession> globalSession;
 		slang::createGlobalSession(globalSession.writeRef());
 
@@ -107,13 +119,58 @@ namespace Cobra {
 
 		size_t codeSize;
 		const void* code = compileRequest->getCompileRequestCode(&codeSize);
-		CreateStages({ (const uint32_t*)code, codeSize / sizeof(uint32_t) });
+
+		SlangProgramLayout* layout = compileRequest->getReflection();
+		uint32_t entryPointCount = spReflection_getEntryPointCount(layout);
+		std::vector<EntryPoint> entryPoints(entryPointCount);
+
+		size_t addedSizeBytes = sizeof(uint32_t);
+		for (int i = 0; i < entryPointCount; i++)
+		{
+			SlangEntryPointLayout* entryPoint = spReflection_getEntryPointByIndex(layout, i);
+			entryPoints[i].Stage = SlangStageToCB(spReflectionEntryPoint_getStage(entryPoint));
+			entryPoints[i].Name = spReflectionEntryPoint_getName(entryPoint);
+
+			addedSizeBytes += (sizeof(ShaderStage) + (entryPoints[i].Name.size() + 1));
+		}
+		CreateStages({ (const uint32_t*)code, codeSize / sizeof(uint32_t) }, entryPoints);
+
+		auto addedSizeUints = (size_t)std::ceil((float)addedSizeBytes / sizeof(uint32_t));
+		if (outputCode)
+		{
+			outputCode->resize((codeSize / sizeof(uint32_t)) + addedSizeUints);
+			(*outputCode)[0] = entryPointCount;
+
+			uint32_t byteOffset = sizeof(uint32_t);
+			for (int i = 0; i < entryPointCount; i++)
+			{
+				*(ShaderStage*)((std::byte*)outputCode->data() + byteOffset) = entryPoints[i].Stage;
+				memcpy(((std::byte*)outputCode->data() + byteOffset + sizeof(ShaderStage)), entryPoints[i].Name.data(), entryPoints[i].Name.size() + 1);
+
+				byteOffset += sizeof(ShaderStage) + (entryPoints[i].Name.size() + 1);
+			}
+
+			memcpy(outputCode->data() + addedSizeUints, code, codeSize);
+		}
+#endif
 	}
 
 	Impl<Shader>::Impl(GraphicsContext& context, std::span<const uint32_t> code)
-		: Context(context.pimpl)
-	{
-		CreateStages(code);
+		: Context(context.pimpl) {
+		uint32_t stageCount = code[0];
+		std::vector<EntryPoint> entryPoints(stageCount);
+
+		uint32_t byteOffset = sizeof(uint32_t);
+		for (int i = 0; i < stageCount; i++)
+		{
+			entryPoints[i].Stage = *(ShaderStage*)((std::byte*)code.data() + byteOffset);
+			entryPoints[i].Name = (const char*)((std::byte*)code.data() + byteOffset + sizeof(ShaderStage));
+
+			byteOffset += sizeof(ShaderStage) + (entryPoints[i].Name.size() + 1);
+		}
+
+		auto uintOffset = (size_t)std::ceil((float)byteOffset / sizeof(uint32_t));
+		CreateStages({ code.data() + uintOffset, code.size() - uintOffset }, entryPoints);
 	}
 
 	Impl<Shader>::~Impl()
@@ -133,20 +190,17 @@ namespace Cobra {
 		}
 	}
 
-	void Impl<Shader>::CreateStages(std::span<const uint32_t> code)
+	void Impl<Shader>::CreateStages(std::span<const uint32_t> code, std::span<EntryPoint> entryPoints)
 	{
-		spirv_cross::Compiler comp(code.data(), code.size());
-		auto entryPoints = comp.get_entry_points_and_stages();
-
 		for (auto& entryPoint : entryPoints)
 		{
 			VkShaderStageFlagBits currentStage;
 			VkShaderStageFlags nextStages;
-			ExecutionModelToStage(entryPoint.execution_model, &currentStage, &nextStages);
+			CBStageToVulkan(entryPoint.Stage, &currentStage, &nextStages);
 
 			ShaderData data;
 			data.Stage = currentStage;
-			data.EntryPoint = entryPoint.name;
+			data.EntryPoint = entryPoint.Name;
 
 			if (g_ShaderObjectsSupported)
 			{

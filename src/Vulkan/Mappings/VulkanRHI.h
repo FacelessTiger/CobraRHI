@@ -150,6 +150,19 @@ namespace Cobra {
 	template <>
 	struct Impl<Shader>
 	{
+		enum class ShaderStage : uint32_t
+		{
+			Vertex,
+			Fragment,
+			Compute
+		};
+
+		struct EntryPoint
+		{
+			ShaderStage Stage;
+			std::string Name;
+		};
+
 		struct ShaderData
 		{
 			union
@@ -166,11 +179,11 @@ namespace Cobra {
 
 		std::shared_ptr<Impl<GraphicsContext>> Context;
 
-		Impl(GraphicsContext& context, std::string_view path);
+		Impl(GraphicsContext& context, std::string_view path, std::vector<uint32_t>* outputCode);
 		Impl(GraphicsContext& context, std::span<const uint32_t> code);
 		~Impl();
 
-		void CreateStages(std::span<const uint32_t> code);
+		void CreateStages(std::span<const uint32_t> code, std::span<EntryPoint> entryPoints);
 
 		static ShaderData& GetShaderByID(uint64_t id);
 	};

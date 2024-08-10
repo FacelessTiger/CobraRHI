@@ -1,5 +1,5 @@
 #include "VulkanRHI.h"
-#include <vulkan/utility/vk_format_utils.h>
+#include <vulkan/vulkan_format_traits.hpp>
 
 namespace Cobra {
 
@@ -69,7 +69,7 @@ namespace Cobra {
 		}
 		else
 		{
-			pimpl->Context->TransferManager->Transfer(*this, { (std::byte*)data, pimpl->Size.x * pimpl->Size.y * (uint32_t)vkuFormatTexelSize(Utils::CBImageFormatToVulkan(pimpl->Format)) });
+			pimpl->Context->TransferManager->Transfer(*this, { (std::byte*)data, pimpl->Size.x * pimpl->Size.y * vk::blockSize((vk::Format)Utils::CBImageFormatToVulkan(pimpl->Format)) });
 		}
 	}
 
