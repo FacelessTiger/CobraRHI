@@ -8,9 +8,9 @@ namespace Cobra {
 
 		static VkBufferUsageFlags GABufferUsageToVulkan(BufferUsage usage)
 		{
-			VkBufferUsageFlags ret = VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+			VkBufferUsageFlags ret;
 
-			if (usage & BufferUsage::StorageBuffer)		ret |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+			if (usage & BufferUsage::StorageBuffer)		ret |= (VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
 			if (usage & BufferUsage::TransferSrc)		ret |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 			if (usage & BufferUsage::TransferDst)		ret |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 			if (usage & BufferUsage::IndexBuffer)		ret |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
@@ -34,12 +34,12 @@ namespace Cobra {
 	{
 		if (pimpl->Context->Config.Debug)
 		{
-			VkCheck(pimpl->Context->Config, vkSetDebugUtilsObjectNameEXT(pimpl->Context->Device, PtrTo(VkDebugUtilsObjectNameInfoEXT {
+			VK_CHECK(vkSetDebugUtilsObjectNameEXT(pimpl->Context->Device, PtrTo(VkDebugUtilsObjectNameInfoEXT {
 				.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT,
 				.objectType = VK_OBJECT_TYPE_BUFFER,
 				.objectHandle = (uint64_t)pimpl->Allocation.Buffer,
 				.pObjectName = name.data()
-			})));
+			})), "Failed to set buffer's debug name");
 		}
 	}
 
@@ -81,13 +81,13 @@ namespace Cobra {
 			.requiredFlags = (flags & BufferFlags::DeviceLocal) ? VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT : (VkMemoryPropertyFlags)0
 		};
 
-		VkCheck(context.pimpl->Config, vmaCreateBuffer(Context->Allocator, &bufferInfo, &vmaAllocInfo, &Allocation.Buffer, &Allocation.Allocation, &Allocation.Info));
+		VK_CHECK(vmaCreateBuffer(Context->Allocator, &bufferInfo, &vmaAllocInfo, &Allocation.Buffer, &Allocation.Allocation, &Allocation.Info), "Failed to create buffer");
 
 		VkBufferDeviceAddressInfo addressInfo = {
 			.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
 			.buffer = Allocation.Buffer
 		};
-		Address = (uint64_t)vkGetBufferDeviceAddress(Context->Device, &addressInfo);
+		if (usage & BufferUsage::StorageBuffer) Address = (uint64_t)vkGetBufferDeviceAddress(Context->Device, &addressInfo);
 	}
 
 	Impl<Buffer>::~Impl()

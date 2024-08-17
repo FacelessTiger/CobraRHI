@@ -21,12 +21,12 @@ namespace Cobra {
 	{
 		if (pimpl->Context->Config.Debug)
 		{
-			VkCheck(pimpl->Context->Config, vkSetDebugUtilsObjectNameEXT(pimpl->Context->Device, PtrTo(VkDebugUtilsObjectNameInfoEXT{
+			VK_CHECK(vkSetDebugUtilsObjectNameEXT(pimpl->Context->Device, PtrTo(VkDebugUtilsObjectNameInfoEXT{
 				.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT,
 				.objectType = VK_OBJECT_TYPE_IMAGE,
 				.objectHandle = (uint64_t)pimpl->Allocation.Image,
 				.pObjectName = name.data()
-			})));
+			})), "Failed to set image's debug name");
 		}
 	}
 
@@ -116,7 +116,7 @@ namespace Cobra {
 		: Context(context.pimpl), Size(size), Format(format), Usage(usage)
 	{
 		VkFormat vulkanFormat = Utils::CBImageFormatToVulkan(Format);
-		vmaCreateImage(Context->Allocator, 
+		VK_CHECK(vmaCreateImage(Context->Allocator, 
 			PtrTo(VkImageCreateInfo {
 				.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
 				.imageType = VK_IMAGE_TYPE_2D, // TODO: specify somehow
@@ -136,9 +136,9 @@ namespace Cobra {
 				.requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
 			}),
 			&Allocation.Image, &Allocation.Allocation, nullptr
-		);
+		), "Failed to create image");
 
-		VkCheck(Context->Config, vkCreateImageView(Context->Device, PtrTo(VkImageViewCreateInfo{
+		VK_CHECK(vkCreateImageView(Context->Device, PtrTo(VkImageViewCreateInfo{
 			.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
 			.image = Allocation.Image,
 			.viewType = VK_IMAGE_VIEW_TYPE_2D, // TODO: specify, will be the same as image type above
@@ -150,7 +150,7 @@ namespace Cobra {
 				.baseArrayLayer = 0,
 				.layerCount = 1,
 			}
-		}), nullptr, &View));
+		}), nullptr, &View), "Failed to create image view");
 
 		UpdateDescriptor();
 	}

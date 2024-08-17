@@ -5,6 +5,7 @@
 #include <functional>
 #include <filesystem>
 #include <string>
+#include <expected>
 
 namespace Cobra {
 
@@ -48,6 +49,5 @@ namespace Cobra {
 		GraphicsContext& operator=(GraphicsContext&& other) noexcept;
 
 		Queue& GetQueue(QueueType type);
-	};
-
+	};		
 }

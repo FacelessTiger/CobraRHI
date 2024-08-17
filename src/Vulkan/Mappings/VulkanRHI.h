@@ -18,10 +18,11 @@
 #include <array>
 #include <vector>
 #include <deque>
-#include <source_location>
 #include <sstream>
 
 namespace Cobra {
+
+#define VK_CHECK(function, error) if (function != VK_SUCCESS) throw std::runtime_error(error);
 
 	inline constexpr uint32_t SAMPLER_BINDING = 0;
 	inline constexpr uint32_t STORAGE_IMAGE_BINDING = 1;
@@ -271,17 +272,6 @@ namespace Cobra {
 
 		Impl(size_t size);
 	};
-
-	inline void VkCheck(const ContextConfig& config, VkResult result, std::string_view message = "Result is not VK_SUCCESS", std::source_location location = std::source_location::current())
-	{
-		if (!config.Debug) return;
-		if (result == VK_SUCCESS) return;
-
-		std::stringstream error;
-		error << "File: " << location.file_name() << "(" << location.line() << ":" << location.column() << ") '" << location.function_name() << "': ";
-		error << message;
-		config.Callback(error.str().c_str(), MessageSeverity::Error);
-	}
 
 	template <typename T>
 	inline T* PtrTo(T&& v) { return &v; }

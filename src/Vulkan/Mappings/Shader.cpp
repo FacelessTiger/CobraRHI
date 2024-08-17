@@ -112,10 +112,10 @@ namespace Cobra {
 			"-fvk-use-entrypoint-name"
 		});
 		if (SLANG_FAILED(compileRequest->processCommandLineArguments(compileArguments.data(), (int)compileArguments.size())))
-			Context->Config.Callback((std::string("Shader error: ") + compileRequest->getDiagnosticOutput()).c_str(), MessageSeverity::Error);
+			throw std::runtime_error("Shader error at path \"" + std::string(path) + "\" with error: " + compileRequest->getDiagnosticOutput());
 
 		if (SLANG_FAILED(compileRequest->compile()))
-			return;
+			throw std::runtime_error("Failed to compile shader at path \"" + std::string(path) + "\"");
 
 		size_t codeSize;
 		const void* code = compileRequest->getCompileRequestCode(&codeSize);
@@ -218,7 +218,7 @@ namespace Cobra {
 					.pushConstantRangeCount = 1,
 					.pPushConstantRanges = PUSH_CONSTANT_RANGES.data()
 				};
-				VkCheck(Context->Config, vkCreateShadersEXT(Context->Device, 1, &shaderInfo, nullptr, &data.Shader));
+				VK_CHECK(vkCreateShadersEXT(Context->Device, 1, &shaderInfo, nullptr, &data.Shader), "Failed to create shader object");
 			}
 			else
 			{
@@ -227,7 +227,7 @@ namespace Cobra {
 					.codeSize = code.size_bytes(),
 					.pCode = code.data()
 				};
-				VkCheck(Context->Config, vkCreateShaderModule(Context->Device, &shaderInfo, nullptr, &data.Module));
+				VK_CHECK(vkCreateShaderModule(Context->Device, &shaderInfo, nullptr, &data.Module), "Failed to create shader module");
 
 				uint64_t id = s_IDCounter++;
 				data.ID = id;

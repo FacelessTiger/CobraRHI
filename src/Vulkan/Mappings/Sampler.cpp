@@ -16,11 +16,11 @@ namespace Cobra {
 	Impl<Sampler>::Impl(GraphicsContext& context, Filter min, Filter mag)
 		: Context(context.pimpl)
 	{
-		VkCheck(Context->Config, vkCreateSampler(Context->Device, PtrTo(VkSamplerCreateInfo {
+		VK_CHECK(vkCreateSampler(Context->Device, PtrTo(VkSamplerCreateInfo {
 			.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
 			.magFilter = Utils::CBFilterToVulkan(mag),
 			.minFilter = Utils::CBFilterToVulkan(min)
-		}), nullptr, &Sampler));
+		}), nullptr, &Sampler), "Failed to create sampler");
 
 		// Update descriptor
 		vkUpdateDescriptorSets(Context->Device, 1, PtrTo(VkWriteDescriptorSet {

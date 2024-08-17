@@ -10,11 +10,11 @@ namespace Cobra::Platform {
 	VkSurfaceKHR CreateVulkanSurface(std::shared_ptr<Impl<GraphicsContext>> context, void* handle)
 	{
 		VkSurfaceKHR surface;
-		VkCheck(context->Config, vkCreateWin32SurfaceKHR(context->Instance, PtrTo(VkWin32SurfaceCreateInfoKHR{
+		VK_CHECK(vkCreateWin32SurfaceKHR(context->Instance, PtrTo(VkWin32SurfaceCreateInfoKHR{
 			.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR,
 			.hinstance = GetModuleHandle(nullptr),
 			.hwnd = (HWND)handle
-		}), nullptr, &surface));
+		}), nullptr, &surface), "Failed to create surface for Win32");
 
 		return surface;
 	}

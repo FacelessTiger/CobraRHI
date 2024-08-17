@@ -10,10 +10,10 @@ namespace Cobra::Platform {
 	VkSurfaceKHR CreateVulkanSurface(std::shared_ptr<Impl<GraphicsContext>> context, void* handle)
 	{
 		VkSurfaceKHR surface;
-		VkCheck(context->Config, vkCreateAndroidSurfaceKHR(context->Instance, PtrTo(VkAndroidSurfaceCreateInfoKHR{
+		VK_CHECK(vkCreateAndroidSurfaceKHR(context->Instance, PtrTo(VkAndroidSurfaceCreateInfoKHR{
 			.sType = VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR,
 			.window = (ANativeWindow*)handle
-		}), nullptr, &surface));
+		}), nullptr, &surface), "Failed to create surface for Android");
 
 		return surface;
 	}

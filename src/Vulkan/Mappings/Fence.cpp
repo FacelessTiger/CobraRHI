@@ -46,14 +46,14 @@ namespace Cobra {
 	Impl<Fence>::Impl(Impl<GraphicsContext>* context)
 		: Context(context)
 	{
-		VkCheck(Context->Config, vkCreateSemaphore(Context->Device, PtrTo(VkSemaphoreCreateInfo{
+		VK_CHECK(vkCreateSemaphore(Context->Device, PtrTo(VkSemaphoreCreateInfo{
 			.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
 			.pNext = PtrTo(VkSemaphoreTypeCreateInfo {
 				.sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO,
 				.semaphoreType = VK_SEMAPHORE_TYPE_TIMELINE,
 				.initialValue = LastSubmittedValue
 			})
-		}), nullptr, &TimelineSemaphore));
+		}), nullptr, &TimelineSemaphore), "Failed to create Fence");
 	}
 
 }

@@ -47,7 +47,7 @@ namespace Cobra {
 
 		Semaphores.resize(Images.size() * 2);
 		for (int i = 0; i < Semaphores.size(); i++)
-			VkCheck(Context->Config, vkCreateSemaphore(Context->Device, &semaphoreInfo, nullptr, &Semaphores[i]));
+			VK_CHECK(vkCreateSemaphore(Context->Device, &semaphoreInfo, nullptr, &Semaphores[i]), "Failed to create semaphore for swapchain with index " + std::to_string(i));
 	}
 
 	Impl<Swapchain>::~Impl()
@@ -114,7 +114,7 @@ namespace Cobra {
 
 		VkSwapchainKHR oldSwapchain = Swapchain;
 		if (!firstCreation) createInfo.oldSwapchain = oldSwapchain;
-		VkCheck(Context->Config, vkCreateSwapchainKHR(Context->Device, &createInfo, nullptr, &Swapchain));
+		VK_CHECK(vkCreateSwapchainKHR(Context->Device, &createInfo, nullptr, &Swapchain), "Failed to create swapchain");
 		if (!firstCreation) vkDestroySwapchainKHR(Context->Device, oldSwapchain, nullptr);
 
 		vkGetSwapchainImagesKHR(Context->Device, Swapchain, &imageCount, nullptr);
@@ -142,7 +142,7 @@ namespace Cobra {
 			};
 
 			VkImageView view;
-			VkCheck(Context->Config, vkCreateImageView(Context->Device, &imageViewInfo, nullptr, &view));
+			VK_CHECK(vkCreateImageView(Context->Device, &imageViewInfo, nullptr, &view), "Failed to create image view for swapchain image with index " + std::to_string(i));
 
 			Image image(Context);
 			image.pimpl->Allocation.Image = vulkanImages[i];

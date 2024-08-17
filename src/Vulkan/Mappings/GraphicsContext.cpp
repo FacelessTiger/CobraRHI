@@ -52,7 +52,7 @@ namespace Cobra {
 	Impl<GraphicsContext>::Impl(const ContextConfig& config)
 		: Config(config)
 	{
-		VkCheck(config, volkInitialize());
+		VK_CHECK(volkInitialize(), "Failed to initialize volk");
 
 		CreateInstance();
 		if (config.Debug) CreateDebugMessenger();
@@ -125,7 +125,7 @@ namespace Cobra {
 			.initialDataSize = data.size(),
 			.pInitialData = data.data()
 		};
-		VkCheck(Config, vkCreatePipelineCache(Device, &cacheInfo, nullptr, &PipelineCache));
+		VK_CHECK(vkCreatePipelineCache(Device, &cacheInfo, nullptr, &PipelineCache), "Failed to create pipeline cache");
 
 		// Setup deletion queue(s)
 		DeletionQueues = std::make_unique<DeletionQueue>(*this);
@@ -184,7 +184,7 @@ namespace Cobra {
 			VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT, VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT
 		});
 		
-		VkCheck(Config, vkCreateInstance(PtrTo(VkInstanceCreateInfo {
+		VK_CHECK(vkCreateInstance(PtrTo(VkInstanceCreateInfo {
 			.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
 			.pNext = PtrTo(VkValidationFeaturesEXT {
 				.sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT,
@@ -202,21 +202,21 @@ namespace Cobra {
 			.ppEnabledLayerNames = layers.data(),
 			.enabledExtensionCount = (uint32_t)extensions.size(),
 			.ppEnabledExtensionNames = extensions.data()
-		}), nullptr, &Instance));
+		}), nullptr, &Instance), "Failed to create instance!");
 		volkLoadInstance(Instance);
 	}
 
 	void Impl<GraphicsContext>::CreateDebugMessenger()
 	{
-		VkCheck(Config, vkCreateDebugUtilsMessengerEXT(Instance, PtrTo(DebugMessengerInfo()), nullptr, &Messenger));
+		VK_CHECK(vkCreateDebugUtilsMessengerEXT(Instance, PtrTo(DebugMessengerInfo()), nullptr, &Messenger), "Failed to create debug messenger");
 	}
 
 	void Impl<GraphicsContext>::PickGPU()
 	{
 		uint32_t deviceCount = 0;
-		VkCheck(Config, vkEnumeratePhysicalDevices(Instance, &deviceCount, nullptr));
+		VK_CHECK(vkEnumeratePhysicalDevices(Instance, &deviceCount, nullptr), "Failed to enumerate devices");
 		std::vector<VkPhysicalDevice> devices(deviceCount);
-		VkCheck(Config, vkEnumeratePhysicalDevices(Instance, &deviceCount, devices.data()));
+		VK_CHECK(vkEnumeratePhysicalDevices(Instance, &deviceCount, devices.data()), "Failed to enumerate devices");
 
 		ChosenGPU = devices[0];
 		for (auto& device : devices)
@@ -233,9 +233,9 @@ namespace Cobra {
 
 		// Check optional extensions
 		uint32_t propertyCount;
-		vkEnumerateDeviceExtensionProperties(ChosenGPU, nullptr, &propertyCount, nullptr);
+		VK_CHECK(vkEnumerateDeviceExtensionProperties(ChosenGPU, nullptr, &propertyCount, nullptr), "Failed to enumerate extensions");
 		std::vector<VkExtensionProperties> properties(propertyCount);
-		vkEnumerateDeviceExtensionProperties(ChosenGPU, nullptr, &propertyCount, properties.data());
+		VK_CHECK(vkEnumerateDeviceExtensionProperties(ChosenGPU, nullptr, &propertyCount, properties.data()), "Failed to enumerate extensions");
 
 		for (auto& property : properties)
 		{
@@ -345,14 +345,14 @@ namespace Cobra {
 			});
 		}
 
-		VkCheck(Config, vkCreateDevice(ChosenGPU, PtrTo(VkDeviceCreateInfo {
+		VK_CHECK(vkCreateDevice(ChosenGPU, PtrTo(VkDeviceCreateInfo {
 			.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
 			.pNext = builder.GetChain(),
 			.queueCreateInfoCount = (uint32_t)queueInfos.size(),
 			.pQueueCreateInfos = queueInfos.data(),
 			.enabledExtensionCount = (uint32_t)builder.extensions.size(),
 			.ppEnabledExtensionNames = builder.extensions.data()
-		}), nullptr, &Device));
+		}), nullptr, &Device), "Failed to create logical device");
 		volkLoadDevice(Device);
 
 		VkQueue graphicsQueue;
@@ -396,15 +396,15 @@ namespace Cobra {
 			bindingFlags.push_back(VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT | VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT);
 		}
 
-		VkCheck(Config, vkCreateDescriptorPool(Device, PtrTo(VkDescriptorPoolCreateInfo {
+		VK_CHECK(vkCreateDescriptorPool(Device, PtrTo(VkDescriptorPoolCreateInfo {
 			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
 			.flags = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT,
 			.maxSets = 1,
 			.poolSizeCount = (uint32_t)poolSizes.size(),
 			.pPoolSizes = poolSizes.data()
-		}), nullptr, &BindlessPool));
+		}), nullptr, &BindlessPool), "Failed to create bindless descriptor pool");
 
-		VkCheck(Config, vkCreateDescriptorSetLayout(Device, PtrTo(VkDescriptorSetLayoutCreateInfo {
+		VK_CHECK(vkCreateDescriptorSetLayout(Device, PtrTo(VkDescriptorSetLayoutCreateInfo {
 			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
 			.pNext = PtrTo(VkDescriptorSetLayoutBindingFlagsCreateInfo {
 				.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO,
@@ -414,22 +414,22 @@ namespace Cobra {
 			.flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT,
 			.bindingCount = (uint32_t)bindings.size(),
 			.pBindings = bindings.data()
-		}), nullptr, &BindlessSetLayout));
+		}), nullptr, &BindlessSetLayout), "Failed to create bindless descriptor set layout");
 
-		VkCheck(Config, vkAllocateDescriptorSets(Device, PtrTo(VkDescriptorSetAllocateInfo {
+		VK_CHECK(vkAllocateDescriptorSets(Device, PtrTo(VkDescriptorSetAllocateInfo {
 			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
 			.descriptorPool = BindlessPool,
 			.descriptorSetCount = 1,
 			.pSetLayouts = &BindlessSetLayout
-		}), &BindlessSet));
+		}), &BindlessSet), "Failed to allocate bindless descriptor set");
 
-		VkCheck(Config, vkCreatePipelineLayout(Device, PtrTo(VkPipelineLayoutCreateInfo {
+		VK_CHECK(vkCreatePipelineLayout(Device, PtrTo(VkPipelineLayoutCreateInfo {
 			.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
 			.setLayoutCount = 1,
 			.pSetLayouts = &BindlessSetLayout,
 			.pushConstantRangeCount = (uint32_t)PUSH_CONSTANT_RANGES.size(),
 			.pPushConstantRanges = PUSH_CONSTANT_RANGES.data()
-		}), nullptr, &BindlessPipelineLayout));
+		}), nullptr, &BindlessPipelineLayout), "Failed to create bindless pipeline layout");
 
 		if (Config.Debug)
 		{
@@ -438,22 +438,22 @@ namespace Cobra {
 			debugNameInfo.objectType = VK_OBJECT_TYPE_DESCRIPTOR_POOL;
 			debugNameInfo.objectHandle = (uint64_t)BindlessPool;
 			debugNameInfo.pObjectName = "Bindless Pool";
-			VkCheck(Config, vkSetDebugUtilsObjectNameEXT(Device, &debugNameInfo));
+			VK_CHECK(vkSetDebugUtilsObjectNameEXT(Device, &debugNameInfo), "Couldn't set bindless pool debug name");
 
 			debugNameInfo.objectType = VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT;
 			debugNameInfo.objectHandle = (uint64_t)BindlessSetLayout;
 			debugNameInfo.pObjectName = "Bindless Set Layout";
-			VkCheck(Config, vkSetDebugUtilsObjectNameEXT(Device, &debugNameInfo));
+			VK_CHECK(vkSetDebugUtilsObjectNameEXT(Device, &debugNameInfo), "Couldn't set bindless descriptor set layout debug name");
 
 			debugNameInfo.objectType = VK_OBJECT_TYPE_DESCRIPTOR_SET;
 			debugNameInfo.objectHandle = (uint64_t)BindlessSet;
 			debugNameInfo.pObjectName = "Bindless Set";
-			VkCheck(Config, vkSetDebugUtilsObjectNameEXT(Device, &debugNameInfo));
+			VK_CHECK(vkSetDebugUtilsObjectNameEXT(Device, &debugNameInfo), "Couldn't set bindless descriptor set debug name");
 
 			debugNameInfo.objectType = VK_OBJECT_TYPE_PIPELINE_LAYOUT;
 			debugNameInfo.objectHandle = (uint64_t)BindlessPipelineLayout;
 			debugNameInfo.pObjectName = "Bindless Pipeline Layout";
-			VkCheck(Config, vkSetDebugUtilsObjectNameEXT(Device, &debugNameInfo));
+			VK_CHECK(vkSetDebugUtilsObjectNameEXT(Device, &debugNameInfo), "Couldn't set bindless pipeline layout debug name");
 		}
 	}
 
