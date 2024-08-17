@@ -57,6 +57,8 @@ namespace Cobra {
 
 		void Set(const void* data) const;
 		void Transition(ImageLayout layout) const;
+		
+		uVec2 GetSize() const;
 
 		uint32_t GetHandle() const;
 	private:

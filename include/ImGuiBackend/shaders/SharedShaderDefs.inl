@@ -1,14 +1,8 @@
 #pragma once
 
-namespace Slang {
+#include <Slang/Cobra.slang>
 
-#ifdef __cplusplus
-	#include <CobraRHI.h>
-
-	using float2 = Cobra::Vec2;
-	using float3 = Cobra::Vec3;
-	using float4 = Cobra::Vec4;
-#endif
+namespace ImGui::Slang {
 
 	struct Vertex
 	{
@@ -17,12 +11,12 @@ namespace Slang {
 		uint32_t color;
 	};
 
-	struct DrawPush
+	struct Push
 	{
-		const Vertex* vertices;
+		const Ptr<Vertex> vertices;
 		float2 scale;
 		float2 translate;
-		uint32_t image;
+		Cobra::ImageHandle<float4> image;
 	};
 
 }

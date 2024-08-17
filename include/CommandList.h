@@ -84,7 +84,7 @@ namespace Cobra {
 
 		void BindShaders(Span<Shader> shaders);
 		void BindIndexBuffer(const Buffer& buffer, IndexType type, uint64_t offset = 0);
-		void PushConstant(const void* data, size_t size, uint32_t offset);
+		void PushConstant(const void* data, size_t size, uint32_t offset = 0);
 		template<typename T> void PushConstant(const T& data, uint32_t offset = 0) { PushConstant(&data, sizeof(T), offset); };
 
 		void SetDefaultState();

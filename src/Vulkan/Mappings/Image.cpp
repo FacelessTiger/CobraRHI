@@ -101,6 +101,11 @@ namespace Cobra {
 		}
 	}
 
+	uVec2 Image::GetSize() const
+	{
+		return pimpl->Size;
+	}
+
 	uint32_t Image::GetHandle() const { return pimpl->Handle.GetPendingValue(); }
 
 	Impl<Image>::Impl(std::shared_ptr<Impl<GraphicsContext>> context)

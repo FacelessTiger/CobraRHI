@@ -255,7 +255,7 @@ namespace Cobra {
 
 		// TODO: select queues in a better way
 		uint32_t graphicsQueueFamily;
-		uint32_t transferQueueFamily;
+		uint32_t transferQueueFamily = -1;
 
 		for (uint32_t i = 0; i < queueFamilyCount; i++)
 		{
@@ -265,6 +265,9 @@ namespace Cobra {
 			else if (queueFamily.queueFlags & VK_QUEUE_TRANSFER_BIT)
 				transferQueueFamily = i;
 		}
+
+		if (transferQueueFamily == -1)
+			transferQueueFamily = graphicsQueueFamily;
 
 		float queuePriority = 1.0f;
 		std::vector<VkDeviceQueueCreateInfo> queueInfos = {
@@ -363,9 +366,6 @@ namespace Cobra {
 
 	void Impl<GraphicsContext>::SetupBindless()
 	{
-		VkPhysicalDeviceProperties properties;
-		vkGetPhysicalDeviceProperties(ChosenGPU, &properties);
-
 		struct BindingInfo
 		{
 			VkDescriptorType Type;
@@ -374,9 +374,9 @@ namespace Cobra {
 		};
 
 		const auto bindingInfos = std::to_array<BindingInfo>({
-			{ VK_DESCRIPTOR_TYPE_SAMPLER, properties.limits.maxSamplerAllocationCount, SAMPLER_BINDING },
-			{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, properties.limits.maxDescriptorSetStorageImages, STORAGE_IMAGE_BINDING },
-			{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, properties.limits.maxDescriptorSetSampledImages, SAMPLED_IMAGE_BINDING }
+			{ VK_DESCRIPTOR_TYPE_SAMPLER, 1 << 12, SAMPLER_BINDING },
+			{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1 << 20, STORAGE_IMAGE_BINDING },
+			{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1 << 20, SAMPLED_IMAGE_BINDING }
 		});
 
 		std::vector<VkDescriptorPoolSize> poolSizes;

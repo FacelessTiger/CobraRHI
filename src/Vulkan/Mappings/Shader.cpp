@@ -156,7 +156,8 @@ namespace Cobra {
 	}
 
 	Impl<Shader>::Impl(GraphicsContext& context, std::span<const uint32_t> code)
-		: Context(context.pimpl) {
+		: Context(context.pimpl)
+	{
 		uint32_t stageCount = code[0];
 		std::vector<EntryPoint> entryPoints(stageCount);
 
