@@ -2,7 +2,6 @@
 
 namespace Cobra {
 
-	Fence::Fence() { }
 	Fence::Fence(Fence&& other) noexcept { pimpl = std::move(other.pimpl); other.pimpl = nullptr; }
 	Fence& Fence::operator=(Fence&& other) noexcept { pimpl = std::move(other.pimpl); other.pimpl = nullptr; return *this; }
 

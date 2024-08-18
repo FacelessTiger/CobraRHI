@@ -15,6 +15,7 @@ if (BACKEND STREQUAL "VK")
     endif()
 
     set(VOLK_PULL_IN_VULKAN OFF)
+    set(VOLK_HEADERS_ONLY ON)
     add_subdirectory(volk)
     add_subdirectory(vma)
     add_subdirectory(vulkan-headers)
@@ -26,4 +27,8 @@ if (BACKEND STREQUAL "VK")
         GPUOpen::VulkanMemoryAllocator
         Vulkan::Headers
     )
+endif()
+
+if (BACKEND STREQUAL "DX")
+    target_link_libraries(CobraRHI PRIVATE d3d12.lib dxgi.lib)
 endif()

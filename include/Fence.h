@@ -26,7 +26,7 @@ namespace Cobra {
 		uint64_t GetCurrentValue() const;
 	private:
 		friend Impl<Queue>;
-		Fence();
+		Fence() = default;
 	};
 
 	struct SyncPoint

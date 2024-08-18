@@ -29,7 +29,7 @@ namespace Cobra {
 		CommandList Begin() const;
 	private:
 		friend Impl<GraphicsContext>;
-		Queue();
+		Queue() = default;
 	};
 
 }

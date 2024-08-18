@@ -8,5 +8,8 @@ set(BACKEND "VK" CACHE STRING "Select which graphics API backend to use")
 add_subdirectory(src)
 add_subdirectory(deps)
 
+include(CTest)
+add_subdirectory(tests)
+
 target_include_directories(CobraRHI PUBLIC include)
 target_compile_definitions(CobraRHI PRIVATE COBRARHI_INCLUDE_DIR="${CMAKE_CURRENT_LIST_DIR}/include")

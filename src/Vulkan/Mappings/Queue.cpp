@@ -2,7 +2,6 @@
 
 namespace Cobra {
 
-	Queue::Queue() { }
 	Queue::Queue(Queue&& other) noexcept { pimpl = std::move(other.pimpl); other.pimpl = nullptr; }
 	Queue& Queue::operator=(Queue&& other) noexcept { pimpl = std::move(other.pimpl); other.pimpl = nullptr; return *this; }
 

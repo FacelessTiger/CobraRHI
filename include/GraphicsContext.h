@@ -40,14 +40,14 @@ namespace Cobra {
 		std::shared_ptr<Impl<GraphicsContext>> pimpl;
 	public:
 		GraphicsContext(const ContextConfig& config = {});
-		virtual ~GraphicsContext();
 
 		GraphicsContext(const GraphicsContext&) = delete;
 		GraphicsContext& operator=(GraphicsContext& other) = delete;
 
-		GraphicsContext(GraphicsContext&& other) noexcept;
-		GraphicsContext& operator=(GraphicsContext&& other) noexcept;
+		GraphicsContext(GraphicsContext&& other) noexcept { pimpl = std::move(other.pimpl); other.pimpl = nullptr; }
+		GraphicsContext& operator=(GraphicsContext&& other) noexcept { pimpl = std::move(other.pimpl); other.pimpl = nullptr; return *this; }
 
 		Queue& GetQueue(QueueType type);
-	};		
+	};
+		
 }

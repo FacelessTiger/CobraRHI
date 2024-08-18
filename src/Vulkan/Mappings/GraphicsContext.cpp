@@ -35,10 +35,6 @@ namespace Cobra {
 		pimpl->TransferManager = new TransferManager(*this);
 	}
 
-	GraphicsContext::~GraphicsContext() { }
-	GraphicsContext::GraphicsContext(GraphicsContext&& other) noexcept { pimpl = std::move(other.pimpl); other.pimpl = nullptr; }
-	GraphicsContext& GraphicsContext::operator=(GraphicsContext&& other) noexcept { pimpl = std::move(other.pimpl); other.pimpl = nullptr; return *this; }
-
 	Queue& GraphicsContext::GetQueue(QueueType type)
 	{
 		switch (type)
