@@ -23,11 +23,14 @@ function(glob_sources var dir)
     set(${var} ${${var}} PARENT_SCOPE)
 endfunction()
 
-if (BACKEND STREQUAL "VK")
+glob_sources(source Shared)
+if (BACKEND STREQUAL VK)
     glob_sources(source Vulkan)
-elseif(BACKEND STREQUAL "DX")
+elseif(BACKEND STREQUAL DX)
     glob_sources(source DirectX)
 endif()
 
 add_library(CobraRHI ${source})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${source})
+
+target_include_directories(CobraRHI PRIVATE Shared)

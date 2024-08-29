@@ -1,11 +1,10 @@
 #pragma once
 
 #include <CobraRHI.h>
+#include <Shared.h>
+
 #include "../InternalManagers/DeletionQueue.h"
-#include "../InternalManagers/PipelineKeys.h"
 #include "../InternalManagers/VulkanPipelines.h"
-#include "../InternalManagers/ResourceHandle.h"
-#include "../InternalManagers/TransferManager.h"
 #include "../InternalManagers/Utils.h"
 
 #define VMA_STATIC_VULKAN_FUNCTIONS 0
@@ -151,40 +150,26 @@ namespace Cobra {
 	template <>
 	struct Impl<Shader>
 	{
-		enum class ShaderStage : uint32_t
-		{
-			Vertex,
-			Fragment,
-			Compute
-		};
-
-		struct EntryPoint
-		{
-			ShaderStage Stage;
-			std::string Name;
-		};
-
 		struct ShaderData
 		{
 			union
 			{
 				VkShaderEXT Shader;
-				VkShaderModule Module;
+				VkPipelineShaderStageCreateInfo StageInfo;
 			};
 
-			uint64_t ID;
 			VkShaderStageFlagBits Stage;
-			std::string EntryPoint;
+			uint64_t ID;
 		};
 		std::vector<ShaderData> ShaderStages;
 
 		std::shared_ptr<Impl<GraphicsContext>> Context;
 
-		Impl(GraphicsContext& context, std::string_view path, std::vector<uint32_t>* outputCode);
-		Impl(GraphicsContext& context, std::span<const uint32_t> code);
+		Impl(GraphicsContext& context, std::string_view path, ShaderStage stages, std::vector<uint32_t>* outputCode);
+		Impl(GraphicsContext& context, std::span<const uint32_t> code, ShaderStage stages);
 		~Impl();
 
-		void CreateStages(std::span<const uint32_t> code, std::span<EntryPoint> entryPoints);
+		void CreateStages(std::span<const uint32_t> code, ShaderStage stages);
 
 		static ShaderData& GetShaderByID(uint64_t id);
 	};

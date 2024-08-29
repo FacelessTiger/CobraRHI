@@ -40,6 +40,7 @@ namespace Cobra {
 		std::shared_ptr<Impl<GraphicsContext>> pimpl;
 	public:
 		GraphicsContext(const ContextConfig& config = {});
+		virtual ~GraphicsContext();
 
 		GraphicsContext(const GraphicsContext&) = delete;
 		GraphicsContext& operator=(GraphicsContext& other) = delete;

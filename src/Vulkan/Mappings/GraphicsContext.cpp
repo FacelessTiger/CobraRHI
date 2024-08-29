@@ -32,7 +32,12 @@ namespace Cobra {
 	GraphicsContext::GraphicsContext(const ContextConfig& config)
 	{
 		pimpl = std::make_shared<Impl<GraphicsContext>>(config);
-		pimpl->TransferManager = new TransferManager(*this);
+		pimpl->TransferManager = new TransferManager(*this, g_HostImageSupported);
+	}
+
+	GraphicsContext::~GraphicsContext()
+	{
+		delete pimpl->TransferManager;
 	}
 
 	Queue& GraphicsContext::GetQueue(QueueType type)
@@ -129,7 +134,6 @@ namespace Cobra {
 
 	Impl<GraphicsContext>::~Impl()
 	{
-		delete TransferManager;
 		vkDeviceWaitIdle(Device);
 
 		// Write pipeline cache to disk

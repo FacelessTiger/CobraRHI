@@ -1,0 +1,1 @@
+cobra_create_test(triangle)

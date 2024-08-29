@@ -94,6 +94,23 @@ namespace Cobra {
 		}));
 	}
 
+	void CommandList::CopyToBuffer(const Image& src, const Buffer& dst, uint64_t dstOffset)
+	{
+		src.pimpl->TransitionLayout(pimpl->CommandBuffer, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_PIPELINE_STAGE_2_COPY_BIT);
+
+		vkCmdCopyImageToBuffer(pimpl->CommandBuffer, src.pimpl->Allocation.Image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dst.pimpl->Allocation.Buffer, 1, PtrTo(VkBufferImageCopy{
+			.bufferOffset = dstOffset,
+			.imageSubresource = {
+				.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+				.mipLevel = 0,
+				.baseArrayLayer = 0,
+				.layerCount = 1
+			},
+			.imageOffset = { 0, 0, 0},
+			.imageExtent = { src.pimpl->Size.x, src.pimpl->Size.y, 1 }
+		}));
+	}
+
 	void CommandList::BlitImage(const Image& src, const Image& dst, uVec2 srcSize)
 	{
 		src.pimpl->TransitionLayout(pimpl->CommandBuffer, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_PIPELINE_STAGE_2_BLIT_BIT);

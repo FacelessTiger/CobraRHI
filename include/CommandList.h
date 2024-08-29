@@ -75,6 +75,7 @@ namespace Cobra {
 
 		void CopyBufferRegion(const Buffer& src, const Buffer& dst, size_t size, uint32_t srcOffset = 0, uint32_t dstOffset = 0);
 		void CopyToImage(const Buffer& src, const Image& dst, uint32_t srcOffset = 0);
+		void CopyToBuffer(const Image& src, const Buffer& dst, uint64_t dstOffset = 0);
 		void BlitImage(const Image& src, const Image& dst, uVec2 srcSize = { 0, 0 });
 
 		void BeginRendering(const uVec2& region, Span<Image> colorAttachments, const Image* depthAttachment = nullptr);

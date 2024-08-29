@@ -10,3 +10,6 @@
 [submodule "deps/vulkan-headers"]
 	path = deps/vulkan-headers
 	url = https://github.com/KhronosGroup/Vulkan-Headers.git
+[submodule "deps/d3d12ma"]
+	path = deps/d3d12ma
+	url = https://github.com/GPUOpen-LibrariesAndSDKs/D3D12MemoryAllocator.git

@@ -26,13 +26,7 @@ namespace Cobra {
 			if (id)
 			{
 				const auto& shader = Impl<Shader>::GetShaderByID(id);
-
-				shaderStages.push_back({
-					.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-					.stage = shader.Stage,
-					.module = shader.Module,
-					.pName = shader.EntryPoint.c_str(),
-				});
+				shaderStages.push_back(shader.StageInfo);
 			}
 		}
 
@@ -128,12 +122,7 @@ namespace Cobra {
 		auto& shader = Impl<Shader>::GetShaderByID(key.Shader);
 		vkCreateComputePipelines(context->Device, context->PipelineCache, 1, PtrTo(VkComputePipelineCreateInfo{
 			.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO,
-			.stage = {
-				.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-				.stage = shader.Stage,
-				.module = shader.Module,
-				.pName = shader.EntryPoint.c_str(),
-			},
+			.stage = shader.StageInfo,
 			.layout = context->BindlessPipelineLayout
 		}), nullptr, &pipeline);
 		context->ComputePipelines[key] = pipeline;

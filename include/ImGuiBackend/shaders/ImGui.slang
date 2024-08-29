@@ -3,8 +3,8 @@
 struct VertexOutput
 {
     float4 position: SV_Position;
-    float4 color;
-    float2 uv;
+    float4 color: COLOR0;
+    float2 uv: TEXCOORD0;
 };
 
 [vk::push_constant] ImGui::Slang::Push push;

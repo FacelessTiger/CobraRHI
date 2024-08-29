@@ -33,11 +33,87 @@
     float4 operator*(float4 vector, float4x4 matrix) { return mul(vector, matrix); }
     float4x4 operator*(float4x4 matrixLeft, float4x4 matrixRight) { return mul(matrixLeft, matrixRight); }
 
+    #ifdef DXIL_COMPILE
+        struct Ptr<T>
+        {
+            uint2 data;
+
+            __generic<U>
+            __init(Ptr<U> ptr) { data = ptr.data; }
+
+            __init(uint2 ptr) { data = ptr; }
+            __init(uint64_t ptr) { data = (uint2)ptr; }
+            __init(int64_t ptr) { data = (uint2)ptr; }
+
+            __subscript(uint32_t idx) -> T
+            {
+                get { return ByteAddressBuffer::GetFromHandle(data.x).Load<T>((sizeof(T) * idx) + data.y); }
+                set { RWByteAddressBuffer::GetFromHandle(data.x).Store<T>((sizeof(T) * idx) + data.y, newValue); }
+            }
+        }
+
+        __generic<T> __prefix T operator*(Ptr<T> value) { return value[0]; }
+        __generic<T> Ptr<T> operator+(Ptr<T> value, int64_t offset) { return Ptr<T>(uint2(value.data.x, value.data.y + uint32_t(sizeof(T) * offset))); }
+        __generic<T> Ptr<T> operator-(Ptr<T> value, int64_t offset) { return value + -offset; }
+    #endif
+
     namespace Cobra {
 
         [vk::binding(0, 0)] SamplerState g_SamplerHeap[];
         [vk::binding(1, 0)] __DynamicResource g_RWTextureHeap[];
         [vk::binding(2, 0)] __DynamicResource g_TextureHeap[];
+
+        __generic<T, Shape: __ITextureShape, let isArray: int, let isMS: int, let sampleCount: int, let access: int, let isShadow: int, let isCombined: int, let format: int>
+        extension __TextureImpl<T, Shape, isArray, isMS, sampleCount, access, isShadow, isCombined, format> : __IDynamicResourceCastable<__DynamicResourceKind.General>
+        {
+            [require(glsl_hlsl_spirv)]
+            static __TextureImpl<T, Shape, isArray, isMS, sampleCount, access, isShadow, isCombined, format> GetFromHandle(uint32_t handle)
+            {
+                __target_switch
+                {
+                    case glsl:
+                    case spirv:
+                        if (access == 0) return g_TextureHeap[NonUniformResourceIndex(handle)];
+                        else return g_RWTextureHeap[NonUniformResourceIndex(handle)];
+                    case hlsl:
+                        __intrinsic_asm "ResourceDescriptorHeap[NonUniformResourceIndex($0)]";
+                }
+            }
+        }
+
+        extension ByteAddressBuffer
+        {
+            [require(hlsl)]
+            static ByteAddressBuffer GetFromHandle(uint32_t handle)
+            {
+                __intrinsic_asm "ResourceDescriptorHeap[NonUniformResourceIndex($0)]";
+            }
+        }
+
+        extension RWByteAddressBuffer
+        {
+            [require(hlsl)]
+            static RWByteAddressBuffer GetFromHandle(uint32_t handle)
+            {
+                __intrinsic_asm "ResourceDescriptorHeap[NonUniformResourceIndex($0)]";
+            }
+        }
+
+        extension SamplerState
+        {
+            [require(glsl_hlsl_spirv)]
+            static SamplerState GetFromHandle(uint32_t handle)
+            {
+                __target_switch
+                {
+                    case glsl:
+                    case spirv:
+                        return g_SamplerHeap[NonUniformResourceIndex(handle)];
+                    case hlsl:
+                        __intrinsic_asm "SamplerDescriptorHeap[NonUniformResourceIndex($0)]";
+                }
+            }
+        }
 
         struct ImageHandle<T>
         {
@@ -69,9 +145,9 @@
                 return uint2(width, height);
             }
 
-            private SamplerState GetSampler() { return g_SamplerHeap[NonUniformResourceIndex(handle >> 20)]; }
-            private RWTexture2D<T> GetRWTexture() { return g_RWTextureHeap[NonUniformResourceIndex(handle & 0xfffff)]; }
-            private Texture2D<T> GetTexture() { return g_TextureHeap[NonUniformResourceIndex(handle & 0xfffff)]; }
+            private SamplerState GetSampler() { return SamplerState::GetFromHandle(handle >> 20); }
+            private RWTexture2D<T> GetRWTexture() { return RWTexture2D<T>::GetFromHandle(handle & 0xfffff); }
+            private Texture2D<T> GetTexture() { return Texture2D<T>::GetFromHandle(handle & 0xfffff); }
         }
 
         float UnpackUnorm1x8(uint32_t value) { return float(value & 0xff) / 255.0; }

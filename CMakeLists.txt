@@ -3,7 +3,12 @@ project(CobraRHI)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(BACKEND "VK" CACHE STRING "Select which graphics API backend to use")
+set(BACKEND VK CACHE STRING "Select which graphics API backend to use")
+
+set(AVAILABLE_BACKENDS DX VK)
+if (NOT BACKEND IN_LIST AVAILABLE_BACKENDS)
+	message(FATAL_ERROR "Uknown backend ${BACKEND}, must be one of ${AVAILABLE_BACKENDS}")
+endif()
 
 add_subdirectory(src)
 add_subdirectory(deps)

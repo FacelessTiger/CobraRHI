@@ -3,15 +3,14 @@ target_sources(CobraRHI PRIVATE xxHash/xxhash.c)
 
 if (WIN32)
     target_compile_definitions(CobraRHI PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
+    target_link_libraries(CobraRHI PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/slang/lib/windows/slang.lib")
 endif()
 
-if (BACKEND STREQUAL "VK")
+if (BACKEND STREQUAL VK)
     if (WIN32)
         target_compile_definitions(CobraRHI PRIVATE VK_USE_PLATFORM_WIN32_KHR)
-        target_link_libraries(CobraRHI PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/slang/lib/windows/slang.lib")
     elseif (ANDROID)
         target_compile_definitions(CobraRHI PRIVATE VK_USE_PLATFORM_ANDROID_KHR)
-        #target_link_libraries(CobraRHI PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/slang/lib/aarch64/libslang.so")
     endif()
 
     set(VOLK_PULL_IN_VULKAN OFF)
@@ -29,6 +28,13 @@ if (BACKEND STREQUAL "VK")
     )
 endif()
 
-if (BACKEND STREQUAL "DX")
-    target_link_libraries(CobraRHI PRIVATE d3d12.lib dxgi.lib)
+if (BACKEND STREQUAL DX)
+    target_include_directories(CobraRHI PRIVATE agility/include)
+
+    add_subdirectory(d3d12ma)
+
+    target_link_libraries(CobraRHI PRIVATE
+        D3D12MemoryAllocator
+        dxcompiler.lib
+    )
 endif()
