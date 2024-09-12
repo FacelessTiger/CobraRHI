@@ -18,7 +18,7 @@ namespace Cobra {
 
 	Image& Swapchain::GetCurrent()
 	{
-		throw std::runtime_error("Not yet implemented");
+		return pimpl->Images[pimpl->ImageIndex];
 	}
 
 	uVec2 Swapchain::GetSize() const
@@ -48,6 +48,42 @@ namespace Cobra {
 
 		DX_CHECK(factory->MakeWindowAssociation((HWND)window, DXGI_MWA_NO_ALT_ENTER), "Failed to disable Alt+Enter for swapchain");
 		DX_CHECK(swapchain1.As(&Swapchain), "Failed to convert swapchain1 to swapchain4");
+
+		DX_CHECK(Context->Device->CreateDescriptorHeap(PtrTo(D3D12_DESCRIPTOR_HEAP_DESC{
+			.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
+			.NumDescriptors = 3
+		}), IID_PPV_ARGS(&RTVHeap)), "Failed to create RTV heap for swapchain");
+
+		UpdateRenderTargetViews();
+	}
+
+	void Impl<Swapchain>::UpdateRenderTargetViews()
+	{
+		auto descriptorSize = Context->Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+		auto rtvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(RTVHeap->GetCPUDescriptorHandleForHeapStart());
+
+		Images.clear();
+		for (int i = 0; i < 3; i++)
+		{
+			ComPtr<ID3D12Resource> backBuffer;
+			DX_CHECK(Swapchain->GetBuffer(i, IID_PPV_ARGS(&backBuffer)), "Couldn't get swapchain buffer");
+
+			Context->Device->CreateRenderTargetView(backBuffer.Get(), PtrTo(D3D12_RENDER_TARGET_VIEW_DESC{
+				.Format = DXGI_FORMAT_R8G8B8A8_UNORM,
+				.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D
+			}), rtvHandle);
+
+			Image image(Context);
+			image.pimpl->Image = backBuffer;
+			image.pimpl->CpuHandle = rtvHandle;
+			image.pimpl->Layout = D3D12_BARRIER_LAYOUT_UNDEFINED;
+			image.pimpl->Format = Cobra::ImageFormat::R8G8B8A8_UNORM;
+			image.pimpl->Usage = Cobra::ImageUsage::ColorAttachment;
+			image.pimpl->Size = Size;
+
+			Images.push_back(std::move(image));
+			rtvHandle.Offset(1, descriptorSize);
+		}
 	}
 
 }

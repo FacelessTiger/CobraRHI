@@ -24,9 +24,9 @@ function(glob_sources var dir)
 endfunction()
 
 glob_sources(source Shared)
-if (BACKEND STREQUAL VK)
+if (COBRARHI_BACKEND STREQUAL VK)
     glob_sources(source Vulkan)
-elseif(BACKEND STREQUAL DX)
+elseif(COBRARHI_BACKEND STREQUAL DX)
     glob_sources(source DirectX)
 endif()
 

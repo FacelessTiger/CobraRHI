@@ -13,7 +13,7 @@ int main()
 			.Debug = true,
 			.Trace = true,
 			.Callback = [](const char* message, Cobra::MessageSeverity severity) {
-				if (severity == Cobra::MessageSeverity::Error) std::cout << message << std::endl;
+				/*if (severity == Cobra::MessageSeverity::Error)*/ std::cout << message << std::endl;
 			}
 		});
 		Cobra::Queue& queue = context.GetQueue(Cobra::QueueType::Graphics);

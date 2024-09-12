@@ -1,12 +1,14 @@
 target_include_directories(CobraRHI PRIVATE slang/include xxHash)
 target_sources(CobraRHI PRIVATE xxHash/xxhash.c)
 
+add_subdirectory(glfw)
+
 if (WIN32)
     target_compile_definitions(CobraRHI PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
     target_link_libraries(CobraRHI PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/slang/lib/windows/slang.lib")
 endif()
 
-if (BACKEND STREQUAL VK)
+if (COBRARHI_BACKEND STREQUAL VK)
     if (WIN32)
         target_compile_definitions(CobraRHI PRIVATE VK_USE_PLATFORM_WIN32_KHR)
     elseif (ANDROID)
@@ -28,7 +30,7 @@ if (BACKEND STREQUAL VK)
     )
 endif()
 
-if (BACKEND STREQUAL DX)
+if (COBRARHI_BACKEND STREQUAL DX)
     target_include_directories(CobraRHI PRIVATE agility/include)
 
     add_subdirectory(d3d12ma)

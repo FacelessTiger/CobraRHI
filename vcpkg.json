@@ -1,0 +1,20 @@
+{
+  "name": "cobrarhi",
+  "version": "1.0.0",
+  "description": "CobraRHI modern graphics API abstraction",
+  "dependencies": [
+    "shader-slang",
+    "xxhash",
+    "vulkan-headers",
+    "volk",
+    "vulkan-memory-allocator"
+  ],
+  "features": {
+    "tests": {
+      "description": "Build tests",
+      "dependencies": [
+        "glfw3"
+      ]
+    }
+  }
+}

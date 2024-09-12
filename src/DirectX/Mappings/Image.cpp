@@ -22,6 +22,11 @@ namespace Cobra {
 		pimpl = std::make_unique<Impl<Image>>(context, size, format, usage);
 	}
 
+	Image::Image(std::shared_ptr<Impl<GraphicsContext>> context)
+	{
+		pimpl = std::make_unique<Impl<Image>>(context);
+	}
+
 	Image::~Image() { }
 	Image::Image(Image&& other) noexcept { pimpl = std::move(other.pimpl); other.pimpl = nullptr; }
 	Image& Image::operator=(Image&& other) noexcept { pimpl = std::move(other.pimpl); other.pimpl = nullptr; return *this; }
@@ -53,6 +58,10 @@ namespace Cobra {
 	}
 
 	uint32_t Image::GetHandle() const { return pimpl->RHandle.GetPendingValue(); }
+
+	Impl<Image>::Impl(std::shared_ptr<Impl<GraphicsContext>> context)
+		: Context(context)
+	{ }
 
 	Impl<Image>::Impl(GraphicsContext& context, const uVec2& size, ImageFormat format, ImageUsage usage)
 		: Context(context.pimpl), Size(size), Format(format), Usage(usage)

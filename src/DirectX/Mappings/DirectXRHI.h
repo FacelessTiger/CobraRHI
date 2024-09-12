@@ -82,12 +82,17 @@ namespace Cobra {
 		uVec2 Size;
 		bool EnableVsync;
 
-		ComPtr<IDXGISwapChain4> Swapchain;
 		uint32_t ImageIndex = 0;
+		std::vector<Image> Images;
+
+		ComPtr<IDXGISwapChain4> Swapchain;
+		ComPtr<ID3D12DescriptorHeap> RTVHeap;
 
 		std::shared_ptr<Impl<GraphicsContext>> Context;
 
 		Impl(GraphicsContext& context, void* window, uVec2 size, bool enableVsync);
+
+		void UpdateRenderTargetViews();
 	};
 
 	template <>
@@ -146,6 +151,7 @@ namespace Cobra {
 		ResourceHandle RWHandle = { ResourceType::Shared };
 		std::shared_ptr<Impl<GraphicsContext>> Context;
 
+		Impl(std::shared_ptr<Impl<GraphicsContext>> context);
 		Impl(GraphicsContext& context, const uVec2& size, ImageFormat format, ImageUsage usage);
 		~Impl();
 

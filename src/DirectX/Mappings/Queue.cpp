@@ -7,7 +7,7 @@ namespace Cobra {
 
 	SyncPoint Queue::Acquire(const Swapchain& swapchain)
 	{
-		swapchain.pimpl->Swapchain->GetCurrentBackBufferIndex();
+		swapchain.pimpl->ImageIndex = swapchain.pimpl->Swapchain->GetCurrentBackBufferIndex();
 		DX_CHECK(pimpl->Queue->Signal(pimpl->Fence.pimpl->Fence.Get(), pimpl->Fence.Advance()), "Failed to signal Fence when acquiring");
 
 		return SyncPoint(pimpl->Fence);
@@ -40,7 +40,7 @@ namespace Cobra {
 			DX_CHECK(pimpl->Queue->Wait(wait[i].pFence->pimpl->Fence.Get(), wait[i].GetValue()), "Failed to wait when submitting");
 		}
 
-		swapchain.pimpl->Swapchain->Present(0, DXGI_PRESENT_ALLOW_TEARING);
+		swapchain.pimpl->Swapchain->Present(1, 0);
 	}
 
 	void Queue::WaitIdle() const
@@ -61,7 +61,7 @@ namespace Cobra {
 			auto& pending = pimpl->PendingCommandLists.front();
 			if (currentValue >= pending.FenceValue)
 			{
-				pending.CommandList.pimpl->CommandList->ClearState(nullptr);
+				pending.CommandList.pimpl->CommandList->Reset(pending.CommandList.pimpl->Allocator->CommandAllocator.Get(), nullptr);
 
 				auto* allocator = pending.CommandList.pimpl->Allocator;
 				allocator->AvailableCommandLists.push_back(std::move(pending.CommandList));

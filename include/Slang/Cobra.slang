@@ -150,6 +150,22 @@
             private Texture2D<T> GetTexture() { return Texture2D<T>::GetFromHandle(handle & 0xfffff); }
         }
 
+        void printf(uint s)
+        {
+            __target_switch
+            {
+                case glsl:
+                case spirv:
+                    ::printf("%d", s);
+                case hlsl:
+                    RWByteAddressBuffer buffer = RWByteAddressBuffer::GetFromHandle(0);
+
+                    uint original;
+                    buffer.InterlockedAdd(0, 4, original);
+                    buffer.Store(original, s);
+            }
+        }
+
         float UnpackUnorm1x8(uint32_t value) { return float(value & 0xff) / 255.0; }
         float UnpackSnorm1x8(uint32_t value) { return clamp(float(value & 0xff) / 127.0, -1.0, 1.0); }
 

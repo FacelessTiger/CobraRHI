@@ -33,7 +33,12 @@ namespace Cobra {
 
 	void CommandList::Present(Swapchain& swapchain)
 	{
-		swapchain.GetCurrent().pimpl->TransitionLayout(pimpl->CommandList, D3D12_BARRIER_LAYOUT_PRESENT, D3D12_BARRIER_SYNC_NONE);
+		swapchain.GetCurrent().pimpl->TransitionLayout(pimpl->CommandList, D3D12_BARRIER_LAYOUT_PRESENT, D3D12_BARRIER_SYNC_ALL);
+	}
+
+	void CommandList::CopyBufferRegion(const Buffer& src, const Buffer& dst, size_t size, uint32_t srcOffset, uint32_t dstOffset)
+	{
+		pimpl->CommandList->CopyBufferRegion(dst.pimpl->Buffer.Get(), dstOffset, src.pimpl->Buffer.Get(), srcOffset, size);
 	}
 
 	void CommandList::CopyToImage(const Buffer& src, const Image& dst, uint32_t srcOffset)

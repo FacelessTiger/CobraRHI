@@ -37,10 +37,14 @@ namespace Cobra {
 		: Context(context.pimpl), Size(size)
 	{
 		D3D12_HEAP_TYPE heapType;
+		D3D12_RESOURCE_FLAGS resourceFlags = D3D12_RESOURCE_FLAG_NONE;
+
 		if (flags & BufferFlags::DeviceLocal)
 		{
 			if (flags & BufferFlags::Mapped) heapType = D3D12_HEAP_TYPE_GPU_UPLOAD;
 			else heapType = D3D12_HEAP_TYPE_DEFAULT;
+
+			resourceFlags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 		}
 		else
 		{
@@ -48,8 +52,8 @@ namespace Cobra {
 			else heapType = D3D12_HEAP_TYPE_UPLOAD;
 		}
 
-		DX_CHECK(Context->Allocator->CreateResource3(PtrTo(D3D12MA::ALLOCATION_DESC{ .HeapType = heapType }), 
-			PtrTo(CD3DX12_RESOURCE_DESC1::Buffer(size, D3D12_RESOURCE_FLAG_NONE)), 
+		DX_CHECK(Context->Allocator->CreateResource3(PtrTo(D3D12MA::ALLOCATION_DESC{ .HeapType = heapType }),
+			PtrTo(CD3DX12_RESOURCE_DESC1::Buffer(size, resourceFlags)),
 			D3D12_BARRIER_LAYOUT_UNDEFINED,
 			nullptr,
 			0, nullptr,
