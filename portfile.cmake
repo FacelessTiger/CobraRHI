@@ -4,7 +4,7 @@ vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO FacelessTiger/CobraRHI
     REF "${VERSION}"
-    SHA512 0  # This is a temporary value. We will modify this value in the next section.
+    SHA512 9154b0158c6cc5b962f8620888b8965397d1f7d866d80ba62d9be85d4a465a71b30de668d45f5e61fc88a4c2026d58b501cba6b76c8573e70ac77dfc13c992e7
     HEAD_REF main
 )
 
@@ -13,9 +13,6 @@ vcpkg_cmake_configure(
 )
 
 vcpkg_cmake_install()
-vcpkg_cmake_config_fixup(PACKAGE_NAME "cobrarhi")
+vcpkg_cmake_config_fixup(PACKAGE_NAME "cobrahri")
 
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
-
-#file(INSTALL "${SOURCE_PATH}/LICENSE" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}" RENAME copyright)
-#configure_file("${CMAKE_CURRENT_LIST_DIR}/usage" "${CURRENT_PACKAGES_DIR}/share/${PORT}/usage" COPYONLY)
