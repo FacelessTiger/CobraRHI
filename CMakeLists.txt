@@ -55,6 +55,6 @@ install(TARGETS CobraRHI EXPORT CobraRHI-targets
 )
 install(EXPORT CobraRHI-targets
     NAMESPACE CobraRHI::
-    DESTINATION ${CMAKE_INSTALL_DATADIR}/CobraRHI
+    DESTINATION share/CobraRHI
 )
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/ TYPE INCLUDE)
