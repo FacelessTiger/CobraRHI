@@ -16,7 +16,10 @@ endif()
 
 add_subdirectory(src)
 
-target_include_directories(CobraRHI PUBLIC include)
+target_include_directories(CobraRHI PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>   # for headers when building
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/include>  # for client in install mode
+)
 target_compile_definitions(CobraRHI PRIVATE COBRARHI_INCLUDE_DIR="${CMAKE_CURRENT_LIST_DIR}/include")
 
 find_library(SLANG_PATH slang REQUIRED)
@@ -44,3 +47,14 @@ if (COBRARHI_ENABLE_TESTS)
     include(CTest)
     add_subdirectory(tests)
 endif()
+
+install(TARGETS CobraRHI EXPORT CobraRHI-targets
+    ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+    LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+)
+install(EXPORT CobraRHI-targets
+    NAMESPACE CobraRHI::
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/CobraRHI
+)
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/ TYPE INCLUDE)
