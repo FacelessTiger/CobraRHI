@@ -18,7 +18,7 @@ add_subdirectory(src)
 
 target_include_directories(CobraRHI PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>   # for headers when building
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/include>  # for client in install mode
+    $<INSTALL_INTERFACE:include>  # for client in install mode
 )
 target_compile_definitions(CobraRHI PRIVATE COBRARHI_INCLUDE_DIR="${CMAKE_CURRENT_LIST_DIR}/include")
 
