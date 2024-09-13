@@ -48,13 +48,16 @@ if (COBRARHI_ENABLE_TESTS)
     add_subdirectory(tests)
 endif()
 
-install(TARGETS CobraRHI EXPORT CobraRHI-targets
-    ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-    LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+install( TARGETS CobraRHI
+    EXPORT CobraRHI-targets
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+    RUNTIME DESTINATION bin
+    INCLUDES DESTINATION include
 )
 install(EXPORT CobraRHI-targets
+    FILE cobrarhiConfig.cmake
     NAMESPACE CobraRHI::
-    DESTINATION share/CobraRHI
+    DESTINATION lib/cmake/CobraRHI
 )
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/ TYPE INCLUDE)
