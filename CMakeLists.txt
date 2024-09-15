@@ -65,6 +65,9 @@ install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/ TYPE INCLUDE)
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/cobrarhiConfig.cmake"
 "include(CMakeFindDependencyMacro)\n"
 "find_dependency(xxHash CONFIG REQUIRED)\n"
+"find_dependency(VulkanHeaders CONFIG REQUIRED)\n"
+"find_dependency(volk CONFIG REQUIRED)\n"
+"find_dependency(VulkanMemoryAllocator CONFIG REQUIRED)\n"
 "include(\"\${CMAKE_CURRENT_LIST_DIR}/cobrarhiTargets.cmake\")\n"
 )
 
