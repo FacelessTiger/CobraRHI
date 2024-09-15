@@ -4,7 +4,7 @@ vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO FacelessTiger/CobraRHI
     REF "${VERSION}"
-    SHA512 7c2e39b4ffc6c18186c9e38015d80ca4b4a47d3a799eabfbda8fbe7b105b17ea8f7c40d11e4e30ab32b2098b2fb5e6495c55b308e90644d67cfdd07ef3750edc
+    SHA512 fe465801ee91f46871df1a38f2a9e1d08798679914432f71f7fb48594b8bfc05e58936509ec4f91da03f1fed4914db567d27070cb41e84f4902163844ea788fd
     HEAD_REF main
 )
 
@@ -19,7 +19,7 @@ endif()
 
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
-    OPTIONS ${FEATURE_OPTIONS}
+    OPTIONS ${COBRARHI_DEFINES}
 )
 
 vcpkg_cmake_install()
