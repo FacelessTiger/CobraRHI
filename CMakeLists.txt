@@ -24,7 +24,7 @@ target_compile_definitions(CobraRHI PRIVATE COBRARHI_INCLUDE_DIR="${CMAKE_CURREN
 
 find_library(SLANG_PATH slang REQUIRED)
 find_package(xxHash CONFIG REQUIRED)
-target_link_libraries(CobraRHI PRIVATE SLANG_PATH xxHash::xxhash)
+target_link_libraries(CobraRHI PRIVATE ${SLANG_PATH} xxHash::xxhash)
 
 if (WIN32)
     target_compile_definitions(CobraRHI PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
@@ -48,7 +48,7 @@ if (COBRARHI_ENABLE_TESTS)
     add_subdirectory(tests)
 endif()
 
-install( TARGETS CobraRHI
+install(TARGETS CobraRHI
     EXPORT CobraRHI-targets
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
@@ -56,8 +56,17 @@ install( TARGETS CobraRHI
     INCLUDES DESTINATION include
 )
 install(EXPORT CobraRHI-targets
-    FILE cobrarhiConfig.cmake
+    FILE cobrarhiTargets.cmake
     NAMESPACE CobraRHI::
     DESTINATION lib/cmake/CobraRHI
 )
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/ TYPE INCLUDE)
+
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/cobrarhiConfig.cmake"
+"include(CMakeFindDependencyMacro)\n"
+"find_dependency(xxHash CONFIG REQUIRED)\n"
+"include(\"\${CMAKE_CURRENT_LIST_DIR}/cobrarhiTargets.cmake\")\n"
+)
+
+# Install the generated config file
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/cobrarhiConfig.cmake" DESTINATION lib/cmake/CobraRHI)
