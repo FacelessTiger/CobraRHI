@@ -6,7 +6,7 @@
       "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-        "COBRARHI_BACKEND": "VK",
+        "VCPKG_MANIFEST_FEATURES": "vulkan-backend",
         "COBRARHI_ENABLE_TESTS": true
       }
     }

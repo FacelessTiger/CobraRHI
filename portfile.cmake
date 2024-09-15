@@ -4,13 +4,18 @@ vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO FacelessTiger/CobraRHI
     REF "${VERSION}"
-    SHA512 1dbfae5420f2d9043103dee92dcec571dffd8571162653ae954bac0750849bde62a48aca46c87113e73e5f9dbf8a97671b26c745e1aa5387d238e36228ce54b8
+    SHA512 49aba38e5218df8d629db44b64aefdfe63b03d241c159291f17cbe174f079101c77ce900818168e32f3a2fefaea026ec5d4101624db992168ebabba5dcfb77d2
     HEAD_REF main
+)
+
+vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
+    FEATURES
+    vulkan-backend COBRARHI_BACKEND=VK
 )
 
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
-    OPTIONS -DCOBRARHI_BACKEND=VK
+    OPTIONS ${FEATURE_OPTIONS}
 )
 
 vcpkg_cmake_install()

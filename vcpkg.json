@@ -12,16 +12,21 @@
       "host" : true
     },
     "shader-slang",
-    "xxhash",
-    "vulkan-headers",
-    "volk",
-    "vulkan-memory-allocator"
+    "xxhash"
   ],
   "features": {
     "tests": {
       "description": "Build tests",
       "dependencies": [
         "glfw3"
+      ]
+    },
+    "vulkan-backend": {
+      "description": "Use vulkan as the backend",
+      "dependencies": [
+        "vulkan-headers",
+        "volk",
+        "vulkan-memory-allocator"
       ]
     }
   }
