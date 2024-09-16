@@ -28,6 +28,13 @@
         "volk",
         "vulkan-memory-allocator"
       ]
+    },
+    "directx-backend": {
+      "description": "Use directx as the backend",
+      "dependencies": [
+        "directx12-agility",
+        "d3d12-memory-allocator"
+      ]
     }
   }
 }
