@@ -23,7 +23,6 @@ target_include_directories(CobraRHI PUBLIC
 target_compile_definitions(CobraRHI PRIVATE COBRARHI_INCLUDE_DIR="${CMAKE_CURRENT_LIST_DIR}/include")
 
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/cobrarhiConfig.cmake" [=[
-    @PACKAGE_INIT@
     include(CMakeFindDependencyMacro)
     include("${CMAKE_CURRENT_LIST_DIR}/cobrarhiTargets.cmake")
 
