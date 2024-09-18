@@ -22,7 +22,7 @@ target_include_directories(CobraRHI PUBLIC
 )
 target_compile_definitions(CobraRHI PRIVATE COBRARHI_INCLUDE_DIR="${CMAKE_CURRENT_LIST_DIR}/include")
 
-file(WRITE "{CMAKE_CURRENT_BINARY_DIR}/cobrarhiConfig.cmake" [=[
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/cobrarhiConfig.cmake" [=[
     @PACKAGE_INIT@
     include(CMakeFindDependencyMacro)
     include("${CMAKE_CURRENT_LIST_DIR}/cobrarhiTargets.cmake")
@@ -50,7 +50,7 @@ if (COBRARHI_BACKEND STREQUAL VK)
     find_package(VulkanMemoryAllocator CONFIG REQUIRED)
     target_link_libraries(CobraRHI PRIVATE Vulkan::Headers volk::volk_headers GPUOpen::VulkanMemoryAllocator)
 
-    file(APPEND "{CMAKE_CURRENT_BINARY_DIR}/cobrarhiConfig.cmake" [=[
+    file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/cobrarhiConfig.cmake" [=[
         find_dependency(VulkanHeaders CONFIG REQUIRED)
         find_dependency(volk CONFIG REQUIRED)
         find_dependency(VulkanMemoryAllocator CONFIG REQUIRED)
@@ -62,7 +62,7 @@ if (COBRARHI_BACKEND STREQUAL DX)
     find_package(directx12-agility CONFIG REQUIRED)
     target_link_libraries(CobraRHI PRIVATE Microsoft::DirectX-Headers Microsoft::DirectX-Guids Microsoft::DirectX12-Agility)
 
-    file(APPEND "{CMAKE_CURRENT_BINARY_DIR}/cobrarhiConfig.cmake" [=[
+    file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/cobrarhiConfig.cmake" [=[
         find_dependency(directx-headers CONFIG REQUIRED)
         find_dependency(directx12-agility CONFIG REQUIRED)
     ]=])

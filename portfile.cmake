@@ -3,7 +3,7 @@ vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL https://github.com/FacelessTiger/CobraRHI
-    REF a35c3391f10f55e651dc875fd718a19955fe07a9
+    REF c3a27b2083f611d9f8c8b227a2162cdbed7fa1ba
 )
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
