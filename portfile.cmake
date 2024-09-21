@@ -1,9 +1,15 @@
 vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
 
+execute_process(
+    COMMAND git log -1 --format=%H
+    WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+    OUTPUT_VARIABLE GIT_HASH
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL https://github.com/FacelessTiger/CobraRHI
-    REF c3d7918ceda7b425cc9ce7a638d1f9900bc5fc30
+    REF ${GIT_HASH}
 )
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
